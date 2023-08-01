@@ -16,7 +16,7 @@ function words(str: string) {
     return obj
 }
 
-const faust = clike({
+const faustLanguage = StreamLanguage.define(clike({
     name: "clike",
     multiLineStrings: true,
     keywords: words(keywords),
@@ -25,12 +25,7 @@ const faust = clike({
         "@": () => "meta",
         "'": () => "meta",
     }
-})
-
-const editor = new EditorView({
-    extensions: [basicSetup, StreamLanguage.define(faust)],
-    parent: document.body
-})
+}))
 
 const generator = new FaustMonoDspGenerator()
 let compiler: FaustCompiler
@@ -44,27 +39,61 @@ async function loadFaust() {
 
 const faustPromise = loadFaust()
 
-const audioCtx = new AudioContext()
-async function setupAudio() {
-    await audioCtx.resume()
-}
+// const audioCtx = new AudioContext()
+// async function setupAudio() {
+//     await audioCtx.resume()
+// }
 
-let node: AudioNode | undefined
-async function run() {
-    await faustPromise
-    // Compile Faust code
-    await generator.compile(compiler, "dsp", editor.state.doc.toString(), "")
-    // Create an audio node from compiled Faust
-    if (node !== undefined) node.disconnect()
-    node = (await generator.createNode(audioCtx))!
-    node.connect(audioCtx.destination)
-}
+// let node: AudioNode | undefined
+// async function run() {
+//     await faustPromise
+//     // Compile Faust code
+//     await generator.compile(compiler, "dsp", editor.state.doc.toString(), "")
+//     // Create an audio node from compiled Faust
+//     if (node !== undefined) node.disconnect()
+//     node = (await generator.createNode(audioCtx))!
+//     node.connect(audioCtx.destination)
+// }
 
-const el = document.createElement("button")
-el.innerText = "Run"
-el.onclick = async () => {
-    el.onclick = run
-    await setupAudio()
-    run()
+// const el = document.createElement("button")
+// el.innerText = "Run"
+// el.onclick = async () => {
+//     el.onclick = run
+//     await setupAudio()
+//     run()
+// }
+// document.body.appendChild(el)
+
+const template = document.createElement("template")
+template.innerHTML = `
+<div>
+    <button id="run" disabled>Loading Faust...</button>
+    <input id="volume" type="range" min="0" max="100">
+</div>
+<div id="editor">
+</div>
+`
+
+class FaustEditor extends HTMLElement {
+    editor: EditorView
+
+    constructor() {
+        super()
+        this.attachShadow({mode: "open"}).appendChild(template.content.cloneNode(true))
+        this.editor = new EditorView({
+            doc: `import("stdfaust.lib");\nprocess = os.osc(200);`,
+            extensions: [basicSetup, faustLanguage],
+            parent: this.shadowRoot!.querySelector("#editor")!,
+        })
+        const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
+        faustPromise.then(() => {
+            runButton.textContent = "Run"
+            runButton.disabled = false
+        })
+    }
+
+    connectedCallback() {
+
+    }
 }
-document.body.appendChild(el)
+customElements.define("faust-editor", FaustEditor)
