@@ -1,21 +1,28 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
-    <script type="module" src="/src/main.ts"></script>
-  </head>
-  <body>
-    Lorem ipsum dolor sit amet consectetur adipisicing elit.
-    <faust-editor>
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vite + TS</title>
+        <script type="module" src="/src/main.ts"></script>
+        <style>
+            #content {
+                width: 50%;
+                margin: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            <faust-editor>
 import("stdfaust.lib");
 process = no.noise;
-    </faust-editor>
-    Nostrum, id deserunt inventore ut veritatis iusto autem soluta officia debitis omnis, dolor sint cum, illo quam dignissimos fuga quod optio nesciunt.
-    <!-- Need to comment below example due to occurrence of `<`. -->
-    <faust-editor>
+            </faust-editor>
+Nostrum, id deserunt inventore ut veritatis iusto autem soluta officia debitis omnis, dolor sint cum, illo quam dignissimos fuga quod optio nesciunt.
+<!-- Need to comment below example due to occurrence of `<`. -->
+            <faust-editor>
 <!--
 import("stdfaust.lib");
 ctFreq = 500;
@@ -23,6 +30,7 @@ q = 5;
 gain = 1;
 process = no.noise : _ <: fi.resonlp(ctFreq,q,gain),fi.resonlp(ctFreq,q,gain);
 -->
-    </faust-editor>
-  </body>
+            </faust-editor>
+        </div>
+    </body>
 </html>

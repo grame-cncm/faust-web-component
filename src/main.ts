@@ -5,6 +5,7 @@ import {FaustCompiler, FaustMonoDspGenerator, LibFaust, instantiateFaustModuleFr
 import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
 import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
 import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
+import faustSvg from "./faustText.svg"
 
 const keywords = "process component import library declare with environment route waveform soundfile"
 const atoms = "mem prefix int float rdtable rwtable select2 select3 ffunction fconstant fvariable button checkbox vslider hslider nentry vgroup hgroup tgroup vbargraph hbargraph attach acos asin atan atan2 cos sin tan exp log log10 pow sqrt abs min max fmod remainder floor ceil rint"
@@ -71,6 +72,7 @@ template.innerHTML = `
     <div id="controls">
         <button id="run" disabled>Loading Faust...</button>
         <input id="volume" type="range" min="0" max="100">
+        <a href="https://faust.grame.fr/"><img src="${faustSvg}" height="15px" /></a>
     </div>
     <div id="editor">
     </div>
@@ -78,10 +80,20 @@ template.innerHTML = `
 <style>
     #root {
         border: 1px solid black;
+        border-radius: 5px;
     }
 
     #controls {
+        background: #384d64; /* #2b2e84; */
         border-bottom: 1px solid black;
+        display: flex;
+    }
+
+    #controls > a {
+        margin-left: auto;
+        margin-right: 10px;
+        display: flex;
+        align-items: center;
     }
 </style>
 `
@@ -111,3 +123,5 @@ class FaustEditor extends HTMLElement {
     }
 }
 customElements.define("faust-editor", FaustEditor)
+
+console.log(faustSvg)
