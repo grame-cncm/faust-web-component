@@ -29,6 +29,7 @@ const faustLanguage = StreamLanguage.define(clike({
 
 const generator = new FaustMonoDspGenerator()
 let compiler: FaustCompiler
+console.log(compiler!, generator)
 async function loadFaust() {
     // Setup Faust
     const module = await instantiateFaustModuleFromFile(jsURL, dataURL, wasmURL)
