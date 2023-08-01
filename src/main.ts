@@ -1,29 +1,70 @@
 import {EditorView, basicSetup} from "codemirror"
 import {StreamLanguage} from "@codemirror/language"
 import {clike} from "@codemirror/legacy-modes/mode/clike"
+import {FaustCompiler, FaustMonoDspGenerator, LibFaust, instantiateFaustModuleFromFile} from "@grame/faustwasm"
+import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
+import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
+import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
 
 const keywords = "process component import library declare with environment route waveform soundfile"
 const atoms = "mem prefix int float rdtable rwtable select2 select3 ffunction fconstant fvariable button checkbox vslider hslider nentry vgroup hgroup tgroup vbargraph hbargraph attach acos asin atan atan2 cos sin tan exp log log10 pow sqrt abs min max fmod remainder floor ceil rint"
 
 function words(str: string) {
-  const obj: {[key: string]: true} = {}
-  const words = str.split(" ")
-  for (let i = 0; i < words.length; i++) obj[words[i]] = true
-  return obj
+    const obj: {[key: string]: true} = {}
+    const words = str.split(" ")
+    for (let i = 0; i < words.length; i++) obj[words[i]] = true
+    return obj
 }
 
 const faust = clike({
-  name: "clike",
-  multiLineStrings: true,
-  keywords: words(keywords),
-  atoms: words(atoms),
-  hooks: {
-    "@": () => "meta",
-    "'": () => "meta",
-  }
+    name: "clike",
+    multiLineStrings: true,
+    keywords: words(keywords),
+    atoms: words(atoms),
+    hooks: {
+        "@": () => "meta",
+        "'": () => "meta",
+    }
 })
 
 const editor = new EditorView({
-  extensions: [basicSetup, StreamLanguage.define(faust)],
-  parent: document.body
+    extensions: [basicSetup, StreamLanguage.define(faust)],
+    parent: document.body
 })
+
+const generator = new FaustMonoDspGenerator()
+let compiler: FaustCompiler
+async function loadFaust() {
+    // Setup Faust
+    const module = await instantiateFaustModuleFromFile(jsURL, dataURL, wasmURL)
+    const libFaust = new LibFaust(module)
+    compiler = new FaustCompiler(libFaust)
+    console.log("Loaded Faust")
+}
+
+const faustPromise = loadFaust()
+
+const audioCtx = new AudioContext()
+async function setupAudio() {
+    await audioCtx.resume()
+}
+
+let node: AudioNode | undefined
+async function run() {
+    await faustPromise
+    // Compile Faust code
+    await generator.compile(compiler, "dsp", editor.state.doc.toString(), "")
+    // Create an audio node from compiled Faust
+    if (node !== undefined) node.disconnect()
+    node = (await generator.createNode(audioCtx))!
+    node.connect(audioCtx.destination)
+}
+
+const el = document.createElement("button")
+el.innerText = "Run"
+el.onclick = async () => {
+    el.onclick = run
+    await setupAudio()
+    run()
+}
+document.body.appendChild(el)
