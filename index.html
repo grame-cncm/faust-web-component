@@ -9,8 +9,20 @@
   </head>
   <body>
     Lorem ipsum dolor sit amet consectetur adipisicing elit.
-    <faust-editor></faust-editor>
+    <faust-editor>
+import("stdfaust.lib");
+process = no.noise;
+    </faust-editor>
     Nostrum, id deserunt inventore ut veritatis iusto autem soluta officia debitis omnis, dolor sint cum, illo quam dignissimos fuga quod optio nesciunt.
-    <faust-editor />
+    <!-- Need to comment below example due to occurrence of `<`. -->
+    <faust-editor>
+<!--
+import("stdfaust.lib");
+ctFreq = 500;
+q = 5;
+gain = 1;
+process = no.noise : _ <: fi.resonlp(ctFreq,q,gain),fi.resonlp(ctFreq,q,gain);
+-->
+    </faust-editor>
   </body>
 </html>

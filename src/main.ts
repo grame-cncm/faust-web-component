@@ -67,22 +67,39 @@ const faustPromise = loadFaust()
 
 const template = document.createElement("template")
 template.innerHTML = `
-<div>
-    <button id="run" disabled>Loading Faust...</button>
-    <input id="volume" type="range" min="0" max="100">
+<div id="root">
+    <div id="controls">
+        <button id="run" disabled>Loading Faust...</button>
+        <input id="volume" type="range" min="0" max="100">
+    </div>
+    <div id="editor">
+    </div>
 </div>
-<div id="editor">
-</div>
+<style>
+    #root {
+        border: 1px solid black;
+    }
+
+    #controls {
+        border-bottom: 1px solid black;
+    }
+</style>
 `
 
 class FaustEditor extends HTMLElement {
-    editor: EditorView
+    editor: EditorView | undefined = undefined
 
     constructor() {
         super()
+        console.log("constructor", this.innerHTML)
+    }
+
+    connectedCallback() {
+        console.log("connected", this.innerHTML)
+        const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
         this.attachShadow({mode: "open"}).appendChild(template.content.cloneNode(true))
         this.editor = new EditorView({
-            doc: `import("stdfaust.lib");\nprocess = os.osc(200);`,
+            doc: code,
             extensions: [basicSetup, faustLanguage],
             parent: this.shadowRoot!.querySelector("#editor")!,
         })
@@ -91,10 +108,6 @@ class FaustEditor extends HTMLElement {
             runButton.textContent = "Run"
             runButton.disabled = false
         })
-    }
-
-    connectedCallback() {
-
     }
 }
 customElements.define("faust-editor", FaustEditor)
