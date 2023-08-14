@@ -31,6 +31,16 @@ gain = 1;
 process = no.noise : _ <: fi.resonlp(ctFreq,q,gain),fi.resonlp(ctFreq,q,gain);
 -->
             </faust-editor>
+Ex velit voluptates, laudantium laboriosam est quis veniam temporibus tempore minima aspernatur, modi labore molestiae provident adipisci voluptatem dolorem voluptatibus asperiores possimus.
+            <faust-editor>
+<!--
+import("stdfaust.lib");
+ctFreq = hslider("cutoffFrequency",500,50,10000,0.01);
+q = hslider("q",5,1,30,0.1);
+gain = hslider("gain",1,0,1,0.01);
+process = no.noise : fi.resonlp(ctFreq,q,gain);
+-->
+            </faust-editor>
         </div>
     </body>
 </html>

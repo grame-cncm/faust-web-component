@@ -8,10 +8,10 @@ import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
 import {FaustUI} from "@shren/faust-ui"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import {library, icon} from "@fortawesome/fontawesome-svg-core"
-import {faPlay, faStop, faUpRightFromSquare} from "@fortawesome/free-solid-svg-icons"
+import {faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight} from "@fortawesome/free-solid-svg-icons"
 import faustSvg from "./faustText.svg"
 
-for (const icon of [faPlay, faStop, faUpRightFromSquare]) {
+for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight]) {
     library.add(icon)
 }
 
@@ -55,15 +55,27 @@ const template = document.createElement("template")
 template.innerHTML = `
 <div id="root">
     <div id="controls">
-        <button class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
-        <button class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
-        <a id="ide" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
+        <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
+        <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
+        <a title="Open in Faust IDE" id="ide" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
         <!-- TODO: volume control? <input id="volume" type="range" min="0" max="100"> -->
         <a id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
     </div>
-    <div id="editor">
+    <div id="content">
+        <div id="editor"></div>
+        <div id="sidebar">
+            <div id="sidebar-buttons">
+                <button title="Toggle sidebar" id="sidebar-toggle" class="button" disabled>${icon({ prefix: "fas", iconName: "angles-left" }).html[0]}</button>
+                <!--
+                    <button>UI</button>
+                    <button>DI</button>
+                -->
+            </div>
+            <div id="sidebar-content">
+                <div id="faust-ui"></div>
+            </div>
+        </div>
     </div>
-    <div id="faust-ui"></div>
 </div>
 <style>
     #root {
@@ -72,7 +84,7 @@ template.innerHTML = `
     }
 
     #controls {
-        background: #384d64;
+        background-color: #384d64;
         border-bottom: 1px solid black;
         display: flex;
     }
@@ -82,6 +94,51 @@ template.innerHTML = `
         margin-right: 10px;
         display: flex;
         align-items: center;
+    }
+
+    #content {
+        display: flex;
+    }
+
+    #editor {
+        flex-grow: 1;
+    }
+
+    #editor .cm-editor {
+        height: 100%;
+    }
+
+    #sidebar {
+        border-left: 1px solid black;
+        display: flex;
+    }
+
+    #sidebar-buttons {
+        background-color: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #sidebar-buttons .button {
+        background-color: #f5f5f5;
+        color: #000;
+        width: 20px;
+        height: 20px;
+        padding: 4px;
+    }
+
+    #sidebar-buttons .button:hover {
+        background-color: #ccc;
+    }
+
+    #sidebar-buttons .button:active {
+        background-color: #aaa;
+    }
+
+    #sidebar-content {
+        background-color: #fff;
+        display: none;
+        border-left: 1px solid black;
     }
 
     a.button {
@@ -103,7 +160,7 @@ template.innerHTML = `
     }
 
     .button:active {
-        background: #373736;
+        background-color: #373736;
     }
 
     .button:disabled {
@@ -147,6 +204,8 @@ class FaustEditor extends HTMLElement {
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
+        const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement
+        const sidebarToggle = this.shadowRoot!.querySelector("#sidebar-toggle") as HTMLButtonElement
 
         faustPromise.then(() => runButton.disabled = false)
 
@@ -163,6 +222,9 @@ class FaustEditor extends HTMLElement {
             node.connect(audioCtx.destination)
             stopButton.disabled = false
 
+            sidebarContent.style.display = "flex"
+            sidebarToggle.innerHTML = icon({ prefix: "fas", iconName: "angles-right" }).html[0]
+            sidebarToggle.disabled = false
             const faustUI = new FaustUI({ ui: node.getUI(), root: faustUIRoot })
             faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
