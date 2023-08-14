@@ -48,8 +48,6 @@ async function loadFaust() {
 
 const faustPromise = loadFaust()
 const audioCtx = new AudioContext()
-// TODO: Decide between one node shared between embedded editors or one node per editor.
-let node: IFaustMonoWebAudioNode | undefined
 
 const template = document.createElement("template")
 template.innerHTML = `
@@ -180,8 +178,6 @@ template.innerHTML = `
 `
 
 class FaustEditor extends HTMLElement {
-    editor: EditorView | undefined = undefined
-
     constructor() {
         super()
     }
@@ -197,7 +193,7 @@ class FaustEditor extends HTMLElement {
         urlParams.set("inline", btoa(code).replace("+", "-").replace("/", "_"))
         ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`
 
-        this.editor = new EditorView({
+        const editor = new EditorView({
             doc: code,
             extensions: [basicSetup, faustLanguage],
             parent: this.shadowRoot!.querySelector("#editor")!,
@@ -218,6 +214,8 @@ class FaustEditor extends HTMLElement {
             sidebarToggle.innerHTML = icon({ prefix: "fas", iconName: open ? "angles-right" : "angles-left" }).html[0]
         }
 
+        let node: IFaustMonoWebAudioNode | undefined
+
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
                 await audioCtx.resume()
@@ -225,7 +223,7 @@ class FaustEditor extends HTMLElement {
             await faustPromise
             // Compile Faust code
             // TODO: Report errors to user
-            await generator.compile(compiler, "dsp", this.editor!.state.doc.toString(), "")
+            await generator.compile(compiler, "dsp", editor.state.doc.toString(), "")
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
             node = (await generator.createNode(audioCtx))!
@@ -233,6 +231,7 @@ class FaustEditor extends HTMLElement {
             stopButton.disabled = false
 
             sidebarToggle.disabled = false
+            // TODO: Only open Faust UI if there are actual UI elements (not just an empty box labeled "dsp").
             setSidebarOpen(true)
             const faustUI = new FaustUI({ ui: node.getUI(), root: faustUIRoot })
             faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
