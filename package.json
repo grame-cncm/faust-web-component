@@ -17,6 +17,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@grame/faustwasm": "^0.0.32",
+    "@shren/faust-ui": "^1.1.2",
     "codemirror": "^6.0.1"
   }
 }

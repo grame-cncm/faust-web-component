@@ -1,10 +1,12 @@
 import {EditorView, basicSetup} from "codemirror"
 import {StreamLanguage} from "@codemirror/language"
 import {clike} from "@codemirror/legacy-modes/mode/clike"
-import {FaustCompiler, FaustMonoDspGenerator, LibFaust, instantiateFaustModuleFromFile} from "@grame/faustwasm"
+import {FaustCompiler, FaustMonoDspGenerator, IFaustMonoWebAudioNode, LibFaust, instantiateFaustModuleFromFile} from "@grame/faustwasm"
 import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
 import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
 import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
+import {FaustUI} from "@shren/faust-ui"
+import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import {library, icon} from "@fortawesome/fontawesome-svg-core"
 import {faPlay, faStop, faUpRightFromSquare} from "@fortawesome/free-solid-svg-icons"
 import faustSvg from "./faustText.svg"
@@ -34,21 +36,20 @@ const faustLanguage = StreamLanguage.define(clike({
     }
 }))
 
-const generator = new FaustMonoDspGenerator()
+const generator = new FaustMonoDspGenerator() // TODO: Support polyphony
 let compiler: FaustCompiler
-console.log(compiler!, generator)
+
 async function loadFaust() {
     // Setup Faust
     const module = await instantiateFaustModuleFromFile(jsURL, dataURL, wasmURL)
     const libFaust = new LibFaust(module)
     compiler = new FaustCompiler(libFaust)
-    console.log("Loaded Faust")
 }
 
 const faustPromise = loadFaust()
 const audioCtx = new AudioContext()
 // TODO: Decide between one node shared between embedded editors or one node per editor.
-let node: AudioNode | undefined
+let node: IFaustMonoWebAudioNode | undefined
 
 const template = document.createElement("template")
 template.innerHTML = `
@@ -62,6 +63,7 @@ template.innerHTML = `
     </div>
     <div id="editor">
     </div>
+    <div id="faust-ui"></div>
 </div>
 <style>
     #root {
@@ -113,6 +115,8 @@ template.innerHTML = `
         height: 15px;
         vertical-align: top;
     }
+
+    ${faustCSS}
 </style>
 `
 
@@ -142,6 +146,7 @@ class FaustEditor extends HTMLElement {
 
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
+        const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
 
         faustPromise.then(() => runButton.disabled = false)
 
@@ -157,6 +162,10 @@ class FaustEditor extends HTMLElement {
             node = (await generator.createNode(audioCtx))!
             node.connect(audioCtx.destination)
             stopButton.disabled = false
+
+            const faustUI = new FaustUI({ ui: node.getUI(), root: faustUIRoot })
+            faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
+            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
         }
 
         stopButton.onclick = () => {
