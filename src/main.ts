@@ -165,6 +165,8 @@ template.innerHTML = `
 
     .button:disabled {
         opacity: 0.65;
+        cursor: not-allowed;
+        pointer-events: none;
     }
 
     #controls > .button > svg {
@@ -209,12 +211,20 @@ class FaustEditor extends HTMLElement {
 
         faustPromise.then(() => runButton.disabled = false)
 
+        let sidebarOpen = false
+        const setSidebarOpen = (open: boolean) => {
+            sidebarOpen = open
+            sidebarContent.style.display = open ? "flex" : "none"
+            sidebarToggle.innerHTML = icon({ prefix: "fas", iconName: open ? "angles-right" : "angles-left" }).html[0]
+        }
+
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
                 await audioCtx.resume()
             }
             await faustPromise
             // Compile Faust code
+            // TODO: Report errors to user
             await generator.compile(compiler, "dsp", this.editor!.state.doc.toString(), "")
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
@@ -222,19 +232,25 @@ class FaustEditor extends HTMLElement {
             node.connect(audioCtx.destination)
             stopButton.disabled = false
 
-            sidebarContent.style.display = "flex"
-            sidebarToggle.innerHTML = icon({ prefix: "fas", iconName: "angles-right" }).html[0]
             sidebarToggle.disabled = false
+            setSidebarOpen(true)
             const faustUI = new FaustUI({ ui: node.getUI(), root: faustUIRoot })
             faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
         }
 
+        sidebarToggle.onclick = () => {
+            setSidebarOpen(!sidebarOpen)
+        }
+
         stopButton.onclick = () => {
             if (node !== undefined) {
                 node.disconnect()
+                node.destroy()
                 node = undefined
                 stopButton.disabled = true
+                setSidebarOpen(false)
+                sidebarToggle.disabled = true
             }
         }
     }
