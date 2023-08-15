@@ -67,13 +67,14 @@ template.innerHTML = `
         <div id="sidebar">
             <div id="sidebar-buttons">
                 <button title="Toggle sidebar" id="sidebar-toggle" class="button" disabled>${icon({ prefix: "fas", iconName: "angles-left" }).html[0]}</button>
-                <button title="Controls" id="tab-ui" class="button tab">${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
-                <button title="Block Diagram" id="tab-diagram" class="button tab">${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
-                <button title="Scope/Spectrum" id="tab-plot" class="button tab">${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
+                <button title="Controls" id="tab-ui" class="button tab" disabled>${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
+                <button title="Block Diagram" id="tab-diagram" class="button tab" disabled>${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
+                <button title="Scope/Spectrum" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
             </div>
             <div id="sidebar-content">
                 <div id="faust-ui"></div>
                 <div id="faust-diagram"></div>
+                <div id="faust-scope">TODO</div>
             </div>
         </div>
     </div>
@@ -103,7 +104,7 @@ template.innerHTML = `
 
     #editor {
         flex-grow: 1;
-        overflow-y: scroll;
+        overflow-y: auto;
     }
 
     #editor .cm-editor {
@@ -113,6 +114,7 @@ template.innerHTML = `
     #sidebar {
         border-left: 1px solid black;
         display: flex;
+        max-width: 100%;
     }
 
     #sidebar-toggle {
@@ -122,6 +124,10 @@ template.innerHTML = `
 
     .tab {
         flex-grow: 1;
+    }
+
+    #sidebar-buttons .tab.active {
+        background-color: #bbb;
     }
 
     #sidebar-buttons {
@@ -150,6 +156,15 @@ template.innerHTML = `
         background-color: #fff;
         display: none;
         border-left: 1px solid black;
+        overflow: auto
+    }
+
+    #sidebar-content > div {
+        display: none;
+    }
+
+    #sidebar-content > div.active {
+        display: block;
     }
 
     a.button {
@@ -218,6 +233,8 @@ class FaustEditor extends HTMLElement {
         const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement
         const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement
         const sidebarToggle = this.shadowRoot!.querySelector("#sidebar-toggle") as HTMLButtonElement
+        const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[]
+        const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[]
 
         faustPromise.then(() => runButton.disabled = false)
 
@@ -244,10 +261,13 @@ class FaustEditor extends HTMLElement {
             node = (await generator.createNode(audioCtx))!
             node.connect(audioCtx.destination)
             stopButton.disabled = false
-
+            for (const tabButton of tabButtons) {
+                tabButton.disabled = false
+            }
             sidebarToggle.disabled = false
             // TODO: Only open Faust UI if there are actual UI elements (not just an empty box labeled "dsp").
             setSidebarOpen(true)
+            openTab(0)
             const faustUI = new FaustUI({ ui: node.getUI(), root: faustUIRoot })
             faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
@@ -268,6 +288,23 @@ class FaustEditor extends HTMLElement {
             }
         }
 
+        const openTab = (i: number) => {
+            setSidebarOpen(true)
+            for (const [j, tab] of tabButtons.entries()) {
+                if (i === j) {
+                    tab.classList.add("active")
+                    tabContents[j].classList.add("active")
+                } else {
+                    tab.classList.remove("active")
+                    tabContents[j].classList.remove("active")
+                }
+            }
+        }
+
+        for (const [i, tabButton] of tabButtons.entries()) {
+            tabButton.onclick = () => openTab(i)
+        }
+
         sidebarToggle.onclick = () => {
             setSidebarOpen(!sidebarOpen)
         }
@@ -280,6 +317,9 @@ class FaustEditor extends HTMLElement {
                 stopButton.disabled = true
                 setSidebarOpen(false)
                 sidebarToggle.disabled = true
+                for (const tabButton of tabButtons) {
+                    tabButton.disabled = true
+                }
             }
         }
     }
