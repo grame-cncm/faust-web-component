@@ -1,17 +1,17 @@
 import {EditorView, basicSetup} from "codemirror"
 import {StreamLanguage} from "@codemirror/language"
 import {clike} from "@codemirror/legacy-modes/mode/clike"
-import {FaustCompiler, FaustMonoDspGenerator, IFaustMonoWebAudioNode, LibFaust, instantiateFaustModuleFromFile} from "@grame/faustwasm"
+import {FaustCompiler, FaustMonoDspGenerator, FaustSvgDiagrams, IFaustMonoWebAudioNode, LibFaust, instantiateFaustModuleFromFile} from "@grame/faustwasm"
 import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
 import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
 import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
 import {FaustUI} from "@shren/faust-ui"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import {library, icon} from "@fortawesome/fontawesome-svg-core"
-import {faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight} from "@fortawesome/free-solid-svg-icons"
+import {faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare} from "@fortawesome/free-solid-svg-icons"
 import faustSvg from "./faustText.svg"
 
-for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight]) {
+for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare]) {
     library.add(icon)
 }
 
@@ -38,12 +38,15 @@ const faustLanguage = StreamLanguage.define(clike({
 
 const generator = new FaustMonoDspGenerator() // TODO: Support polyphony
 let compiler: FaustCompiler
+let svgDiagrams: FaustSvgDiagrams
 
 async function loadFaust() {
     // Setup Faust
     const module = await instantiateFaustModuleFromFile(jsURL, dataURL, wasmURL)
     const libFaust = new LibFaust(module)
     compiler = new FaustCompiler(libFaust)
+    svgDiagrams = new FaustSvgDiagrams(compiler)
+
 }
 
 const faustPromise = loadFaust()
@@ -64,13 +67,13 @@ template.innerHTML = `
         <div id="sidebar">
             <div id="sidebar-buttons">
                 <button title="Toggle sidebar" id="sidebar-toggle" class="button" disabled>${icon({ prefix: "fas", iconName: "angles-left" }).html[0]}</button>
-                <!--
-                    <button>UI</button>
-                    <button>DI</button>
-                -->
+                <button title="Controls" id="tab-ui" class="button tab">${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
+                <button title="Block Diagram" id="tab-diagram" class="button tab">${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
+                <button title="Scope/Spectrum" id="tab-plot" class="button tab">${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
             </div>
             <div id="sidebar-content">
                 <div id="faust-ui"></div>
+                <div id="faust-diagram"></div>
             </div>
         </div>
     </div>
@@ -100,6 +103,7 @@ template.innerHTML = `
 
     #editor {
         flex-grow: 1;
+        overflow-y: scroll;
     }
 
     #editor .cm-editor {
@@ -109,6 +113,15 @@ template.innerHTML = `
     #sidebar {
         border-left: 1px solid black;
         display: flex;
+    }
+
+    #sidebar-toggle {
+        border-bottom: 1px solid black;
+        flex-grow: 0;
+    }
+
+    .tab {
+        flex-grow: 1;
     }
 
     #sidebar-buttons {
@@ -202,6 +215,7 @@ class FaustEditor extends HTMLElement {
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
+        const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement
         const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement
         const sidebarToggle = this.shadowRoot!.querySelector("#sidebar-toggle") as HTMLButtonElement
 
@@ -222,8 +236,9 @@ class FaustEditor extends HTMLElement {
             }
             await faustPromise
             // Compile Faust code
+            const code = editor.state.doc.toString()
             // TODO: Report errors to user
-            await generator.compile(compiler, "dsp", editor.state.doc.toString(), "")
+            await generator.compile(compiler, "main", code, "")
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
             node = (await generator.createNode(audioCtx))!
@@ -236,6 +251,21 @@ class FaustEditor extends HTMLElement {
             const faustUI = new FaustUI({ ui: node.getUI(), root: faustUIRoot })
             faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
+
+            setSVG(svgDiagrams.from("main", code, "")["process.svg"])
+        }
+
+        const setSVG = (svgString: string) => {
+            faustDiagram.innerHTML = svgString
+
+            for (const a of faustDiagram.querySelectorAll("a")) {
+                a.onclick = e => {
+                    e.preventDefault()
+                    const filename = (a.href as any as SVGAnimatedString).baseVal
+                    const svgString = compiler.fs().readFile("main-svg/" + filename, { encoding: "utf8" }) as string
+                    setSVG(svgString)
+                }
+            }
         }
 
         sidebarToggle.onclick = () => {
