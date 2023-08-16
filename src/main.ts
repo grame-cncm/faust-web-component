@@ -8,10 +8,11 @@ import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
 import {FaustUI} from "@shren/faust-ui"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import {library, icon} from "@fortawesome/fontawesome-svg-core"
-import {faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare} from "@fortawesome/free-solid-svg-icons"
+import {faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare, faChartLine} from "@fortawesome/free-solid-svg-icons"
 import faustSvg from "./faustText.svg"
+import { Scope } from "./scope"
 
-for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare]) {
+for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare, faChartLine]) {
     library.add(icon)
 }
 
@@ -69,12 +70,14 @@ template.innerHTML = `
                 <button title="Toggle sidebar" id="sidebar-toggle" class="button" disabled>${icon({ prefix: "fas", iconName: "angles-left" }).html[0]}</button>
                 <button title="Controls" id="tab-ui" class="button tab" disabled>${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
                 <button title="Block Diagram" id="tab-diagram" class="button tab" disabled>${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
-                <button title="Scope/Spectrum" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
+                <button title="Scope" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
+                <button title="Spectrum" id="tab-spectrum" class="button tab" disabled>${icon({ prefix: "fas", iconName: "chart-line" }).html[0]}</button>
             </div>
             <div id="sidebar-content">
                 <div id="faust-ui"></div>
                 <div id="faust-diagram"></div>
-                <div id="faust-scope">TODO</div>
+                <div id="faust-scope"></div>
+                <div id="faust-spectrum"></div>
             </div>
         </div>
     </div>
@@ -83,6 +86,11 @@ template.innerHTML = `
     #root {
         border: 1px solid black;
         border-radius: 5px;
+        box-sizing: border-box;
+    }
+
+    *, *:before, *:after {
+        box-sizing: inherit; 
     }
 
     #controls {
@@ -96,6 +104,11 @@ template.innerHTML = `
         margin-right: 10px;
         display: flex;
         align-items: center;
+    }
+
+    #faust-scope, #faust-spectrum {
+        min-width: 220px;
+        min-height: 150px;
     }
 
     #content {
@@ -169,7 +182,6 @@ template.innerHTML = `
 
     a.button {
         appearance: button;
-        box-sizing: border-box;
     }
 
     .button {
@@ -210,7 +222,6 @@ class FaustEditor extends HTMLElement {
         super()
     }
 
-    // TODO: include collapsible sidepane or underpane for UI and diagram
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
         this.attachShadow({mode: "open"}).appendChild(template.content.cloneNode(true))
@@ -246,6 +257,9 @@ class FaustEditor extends HTMLElement {
         }
 
         let node: IFaustMonoWebAudioNode | undefined
+        let analyser: AnalyserNode | undefined
+        let scope: Scope | undefined
+        let spectrum: Scope | undefined
 
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
@@ -273,6 +287,13 @@ class FaustEditor extends HTMLElement {
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
 
             setSVG(svgDiagrams.from("main", code, "")["process.svg"])
+
+            analyser = new AnalyserNode(audioCtx, {
+                fftSize: Math.pow(2, 11), minDecibels: -96, maxDecibels: 0, smoothingTimeConstant: 0.85
+            })
+            node.connect(analyser)
+            scope = new Scope(tabContents[2])
+            spectrum = new Scope(tabContents[3])
         }
 
         const setSVG = (svgString: string) => {
@@ -288,6 +309,21 @@ class FaustEditor extends HTMLElement {
             }
         }
 
+        let animPlot: number | undefined
+        const drawScope = () => {
+            scope!.renderScope([{
+                analyser: analyser!,
+                style: "rgb(212, 100, 100)",
+                edgeThreshold: 0.09,
+            }])
+            animPlot = requestAnimationFrame(drawScope)
+        }
+
+        const drawSpectrum = () => {
+            spectrum!.renderSpectrum(analyser!)
+            animPlot = requestAnimationFrame(drawSpectrum)
+        }
+
         const openTab = (i: number) => {
             setSidebarOpen(true)
             for (const [j, tab] of tabButtons.entries()) {
@@ -298,6 +334,18 @@ class FaustEditor extends HTMLElement {
                     tab.classList.remove("active")
                     tabContents[j].classList.remove("active")
                 }
+            }
+            if (i === 2) {
+                scope!.onResize()
+                if (animPlot !== undefined) cancelAnimationFrame(animPlot)
+                animPlot = requestAnimationFrame(drawScope)
+            } else if (i === 3) {
+                spectrum!.onResize()
+                if (animPlot !== undefined) cancelAnimationFrame(animPlot)
+                animPlot = requestAnimationFrame(drawSpectrum)
+            } else if (animPlot !== undefined) {
+                cancelAnimationFrame(animPlot)
+                animPlot = undefined
             }
         }
 
