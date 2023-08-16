@@ -1,6 +1,16 @@
-import {EditorView, basicSetup} from "codemirror"
+import {EditorView} from "codemirror"
+// Most of the basic CodeMirror setup, sans folds.
+import {lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, keymap} from "@codemirror/view"
+import {history, defaultKeymap, historyKeymap} from "@codemirror/commands"
+import {indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching} from "@codemirror/language"
+import {highlightSelectionMatches, searchKeymap} from "@codemirror/search"
+import {closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap} from "@codemirror/autocomplete"
+import {EditorState} from "@codemirror/state"
+// Custom CodeMirror setup
 import {StreamLanguage} from "@codemirror/language"
 import {clike} from "@codemirror/legacy-modes/mode/clike"
+import {lintKeymap, setDiagnostics, openLintPanel, closeLintPanel} from "@codemirror/lint"
+
 import {FaustCompiler, FaustMonoDspGenerator, FaustSvgDiagrams, IFaustMonoWebAudioNode, LibFaust, instantiateFaustModuleFromFile} from "@grame/faustwasm"
 import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
 import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
@@ -10,7 +20,7 @@ import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import {library, icon} from "@fortawesome/fontawesome-svg-core"
 import {faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare, faChartLine} from "@fortawesome/free-solid-svg-icons"
 import faustSvg from "./faustText.svg"
-import { Scope } from "./scope"
+import {Scope} from "./scope"
 
 for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare, faChartLine]) {
     library.add(icon)
@@ -124,6 +134,16 @@ template.innerHTML = `
         height: 100%;
     }
 
+    .cm-diagnostic {
+        font-family: monospace;
+    }
+
+    .cm-diagnostic-error {
+        background-color: #fdf2f5 !important;
+        color: #a4000f !important;
+        border-color: #a4000f !important;
+    }
+
     #sidebar {
         border-left: 1px solid black;
         display: flex;
@@ -234,7 +254,34 @@ class FaustEditor extends HTMLElement {
 
         const editor = new EditorView({
             doc: code,
-            extensions: [basicSetup, faustLanguage],
+            extensions: [
+                lineNumbers(),
+                highlightActiveLineGutter(),
+                highlightSpecialChars(),
+                history(),
+                // foldGutter(),
+                drawSelection(),
+                dropCursor(),
+                EditorState.allowMultipleSelections.of(true),
+                indentOnInput(),
+                syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+                bracketMatching(),
+                closeBrackets(),
+                autocompletion(),
+                rectangularSelection(),
+                crosshairCursor(),
+                highlightActiveLine(),
+                highlightSelectionMatches(),
+                keymap.of([
+                    ...closeBracketsKeymap,
+                    ...defaultKeymap,
+                    ...searchKeymap,
+                    ...historyKeymap,
+                    ...completionKeymap,
+                    ...lintKeymap
+                ]),
+                faustLanguage,
+            ],
             parent: this.shadowRoot!.querySelector("#editor")!,
         })
 
@@ -269,7 +316,25 @@ class FaustEditor extends HTMLElement {
             // Compile Faust code
             const code = editor.state.doc.toString()
             // TODO: Report errors to user
-            await generator.compile(compiler, "main", code, "")
+            try {
+                await generator.compile(compiler, "main", code, "")
+            } catch (e: any) {
+                const [_, lineNumber, message] = e.message.trim().match(/^main : (\d+) : (.*)$/)!
+                // Show error in editor
+                const line = editor.state.doc.line(+lineNumber)
+                editor.dispatch(setDiagnostics(editor.state, [{
+                    from: line.from,
+                    to: line.to,
+                    severity: "error",
+                    message,
+                }]))
+                openLintPanel(editor)
+                return
+            }
+            // Clear any old errors
+            editor.dispatch(setDiagnostics(editor.state, []))
+            closeLintPanel(editor)
+
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
             node = (await generator.createNode(audioCtx))!
