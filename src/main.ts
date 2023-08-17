@@ -116,9 +116,18 @@ template.innerHTML = `
         align-items: center;
     }
 
+    #faust-ui {
+        min-width: 232px;
+    }
+
     #faust-scope, #faust-spectrum {
-        min-width: 220px;
+        min-width: 232px;
         min-height: 150px;
+    }
+
+    #faust-diagram {
+        max-width: 232px;
+        height: 150px;
     }
 
     #content {
@@ -189,7 +198,9 @@ template.innerHTML = `
         background-color: #fff;
         display: none;
         border-left: 1px solid black;
-        overflow: auto
+        overflow: auto;
+        max-width: 350px;
+        max-height: 100%;
     }
 
     #sidebar-content > div {
@@ -317,7 +328,6 @@ class FaustEditor extends HTMLElement {
             await faustPromise
             // Compile Faust code
             const code = editor.state.doc.toString()
-            // TODO: Report errors to user
             try {
                 await generator.compile(compiler, "main", code, "")
             } catch (e: any) {
@@ -348,21 +358,27 @@ class FaustEditor extends HTMLElement {
                 tabButton.disabled = false
             }
             sidebarToggle.disabled = false
-            // TODO: Only open Faust UI if there are actual UI elements (not just an empty box labeled "dsp").
             setSidebarOpen(true)
-            openTab(0)
-            const faustUI = new FaustUI({ ui: node.getUI(), root: faustUIRoot })
-            faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
-            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
-
-            setSVG(svgDiagrams.from("main", code, "")["process.svg"])
-
+            // Clear old tab contents
+            for (const tab of tabContents) {
+                while (tab.lastChild) tab.lastChild.remove()
+            }
+            // Create scope & spectrum plots
             analyser = new AnalyserNode(audioCtx, {
                 fftSize: Math.pow(2, 11), minDecibels: -96, maxDecibels: 0, smoothingTimeConstant: 0.85
             })
             node.connect(analyser)
             scope = new Scope(tabContents[2])
             spectrum = new Scope(tabContents[3])
+            // If there are UI elements, open Faust UI (controls tab); otherwise open block diagram.
+            const ui = node.getUI()
+            openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 1)
+            // Create controls via Faust UI
+            const faustUI = new FaustUI({ ui, root: faustUIRoot })
+            faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
+            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
+            // Create SVG block diagram
+            setSVG(svgDiagrams.from("main", code, "")["process.svg"])
         }
 
         const setSVG = (svgString: string) => {
