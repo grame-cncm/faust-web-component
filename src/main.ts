@@ -69,9 +69,9 @@ template.innerHTML = `
     <div id="controls">
         <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
         <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
-        <a title="Open in Faust IDE" id="ide" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
+        <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
         <!-- TODO: volume control? <input id="volume" type="range" min="0" max="100"> -->
-        <a id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
+        <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
     </div>
     <div id="content">
         <div id="editor"></div>
@@ -247,10 +247,12 @@ class FaustEditor extends HTMLElement {
         this.attachShadow({mode: "open"}).appendChild(template.content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
-        const urlParams = new URLSearchParams()
-        // TODO: Maybe open current contents of editor in IDE, rather than original contents.
-        urlParams.set("inline", btoa(code).replace("+", "-").replace("/", "_"))
-        ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`
+        ideLink.onfocus = () => {
+            // Open current contents of editor in IDE
+            const urlParams = new URLSearchParams()
+            urlParams.set("inline", btoa(editor.state.doc.toString()).replace("+", "-").replace("/", "_"))
+            ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`
+        }
 
         const editor = new EditorView({
             doc: code,
