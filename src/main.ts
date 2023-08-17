@@ -63,6 +63,28 @@ async function loadFaust() {
 const faustPromise = loadFaust()
 const audioCtx = new AudioContext()
 
+let deviceUpdateCallbacks: ((d: MediaDeviceInfo[]) => void)[] = []
+async function _getInputDevices() {
+    if (navigator.mediaDevices) {
+        navigator.mediaDevices.ondevicechange = _getInputDevices
+        try {
+            await navigator.mediaDevices.getUserMedia({ audio: true })
+        } catch (e) { }
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        for (const callback of deviceUpdateCallbacks) {
+            callback(devices)
+        }
+    }
+}
+
+let getInputDevicesPromise: Promise<void> | undefined
+async function getInputDevices() {
+    if (getInputDevicesPromise === undefined) {
+        getInputDevicesPromise = _getInputDevices()
+    }
+    await getInputDevicesPromise
+}
+
 const template = document.createElement("template")
 template.innerHTML = `
 <div id="root">
@@ -70,6 +92,12 @@ template.innerHTML = `
         <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
         <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
         <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
+        <select id="audio-input" class="dropdown" disabled>
+            <option>Audio input</option>
+        </select>
+        <select id="midi-input" class="dropdown" disabled>
+            <option>MIDI input</option>
+        </select>
         <!-- TODO: volume control? <input id="volume" type="range" min="0" max="100"> -->
         <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
     </div>
@@ -117,7 +145,8 @@ template.innerHTML = `
     }
 
     #faust-ui {
-        min-width: 232px;
+        width: 232px;
+        max-height: 150px;
     }
 
     #faust-scope, #faust-spectrum {
@@ -244,6 +273,13 @@ template.innerHTML = `
         vertical-align: top;
     }
 
+    .dropdown {
+        height: 19px;
+        margin: 3px 0 3px 10px;
+        border: 0;
+        background: #fff;
+    }
+
     ${faustCSS}
 </style>
 `
@@ -317,6 +353,7 @@ class FaustEditor extends HTMLElement {
         }
 
         let node: IFaustMonoWebAudioNode | undefined
+        let input: MediaStreamAudioSourceNode | undefined
         let analyser: AnalyserNode | undefined
         let scope: Scope | undefined
         let spectrum: Scope | undefined
@@ -352,6 +389,10 @@ class FaustEditor extends HTMLElement {
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
             node = (await generator.createNode(audioCtx))!
+            if (node.numberOfInputs > 0) {
+                await getInputDevices()
+                await connectInput()
+            }
             node.connect(audioCtx.destination)
             stopButton.disabled = false
             for (const tabButton of tabButtons) {
@@ -455,6 +496,35 @@ class FaustEditor extends HTMLElement {
                 }
             }
         }
+
+        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
+
+        const updateInputDevices = (devices: MediaDeviceInfo[]) => {
+            while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove()
+            for (const device of devices) {
+                if (device.kind === "audioinput") {
+                    audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId))
+                }
+            }
+            // TODO: Only enable audio input selector if Faust code accepts inputs.
+            audioInputSelector.disabled = false
+        }
+        deviceUpdateCallbacks.push(updateInputDevices)
+
+        const connectInput = async () => {
+            const deviceId = audioInputSelector.value
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+            if (input) {
+                input.disconnect()
+                input = undefined
+            }
+            if (node && node.numberOfInputs > 0) {
+                input = audioCtx.createMediaStreamSource(stream)
+                input.connect(node!)
+            }
+        }
+
+        audioInputSelector.onchange = connectInput
     }
 }
 

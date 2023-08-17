@@ -15,12 +15,12 @@
     </head>
     <body>
         <div id="content">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
             <faust-editor>
 import("stdfaust.lib");
 process = no.noise;
             </faust-editor>
-Nostrum, id deserunt inventore ut veritatis iusto autem soluta officia debitis omnis, dolor sint cum, illo quam dignissimos fuga quod optio nesciunt.
+            <p>Nostrum, id deserunt inventore ut veritatis iusto autem soluta officia debitis omnis, dolor sint cum, illo quam dignissimos fuga quod optio nesciunt.</p>
 <!-- Need to comment below example due to occurrence of `<`. -->
             <faust-editor>
 <!--
@@ -31,7 +31,7 @@ gain = 1;
 process = no.noise : _ <: fi.resonlp(ctFreq,q,gain),fi.resonlp(ctFreq,q,gain);
 -->
             </faust-editor>
-Ex velit voluptates, laudantium laboriosam est quis veniam temporibus tempore minima aspernatur, modi labore molestiae provident adipisci voluptatem dolorem voluptatibus asperiores possimus.
+            <p>Ex velit voluptates, laudantium laboriosam est quis veniam temporibus tempore minima aspernatur, modi labore molestiae provident adipisci voluptatem dolorem voluptatibus asperiores possimus.</p>
             <faust-editor>
 <!--
 import("stdfaust.lib");
@@ -40,6 +40,18 @@ q = hslider("q",5,1,30,0.1);
 gain = hslider("gain",1,0,1,0.01);
 process = no.noise : fi.resonlp(ctFreq,q,gain);
 -->
+            </faust-editor>
+            <p>Nam tempora officiis sunt nisi cupiditate expedita magnam atque. Unde, itaque.</p>
+            <faust-editor>
+                <!--
+import("stdfaust.lib");
+process = 
+    dm.cubicnl_demo : // distortion 
+    dm.wah4_demo <: // wah pedal
+    dm.phaser2_demo : // stereo phaser 
+    dm.compressor_demo : // stereo compressor
+    dm.zita_light; // stereo reverb
+                -->
             </faust-editor>
         </div>
     </body>
