@@ -319,12 +319,14 @@ class FaustEditor extends HTMLElement {
             try {
                 await generator.compile(compiler, "main", code, "")
             } catch (e: any) {
-                const [_, lineNumber, message] = e.message.trim().match(/^main : (\d+) : (.*)$/)!
+                // Extract line number if available
+                const rawMessage = (e as Error).message.trim()
+                const match = rawMessage.match(/^main : (\d+) : (.*)$/)
+                const message = match ? match[2] : rawMessage
+                const { from, to } = match ? editor.state.doc.line(+match[1]) : { from: 0, to: 0 }
                 // Show error in editor
-                const line = editor.state.doc.line(+lineNumber)
                 editor.dispatch(setDiagnostics(editor.state, [{
-                    from: line.from,
-                    to: line.to,
+                    from, to,
                     severity: "error",
                     message,
                 }]))
