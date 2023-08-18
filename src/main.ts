@@ -64,13 +64,14 @@ const faustPromise = loadFaust()
 const audioCtx = new AudioContext()
 
 let deviceUpdateCallbacks: ((d: MediaDeviceInfo[]) => void)[] = []
+let devices: MediaDeviceInfo[] = []
 async function _getInputDevices() {
     if (navigator.mediaDevices) {
         navigator.mediaDevices.ondevicechange = _getInputDevices
         try {
             await navigator.mediaDevices.getUserMedia({ audio: true })
         } catch (e) { }
-        const devices = await navigator.mediaDevices.enumerateDevices()
+        devices = await navigator.mediaDevices.enumerateDevices()
         for (const callback of deviceUpdateCallbacks) {
             callback(devices)
         }
@@ -83,6 +84,7 @@ async function getInputDevices() {
         getInputDevicesPromise = _getInputDevices()
     }
     await getInputDevicesPromise
+    return devices
 }
 
 const template = document.createElement("template")
@@ -390,8 +392,12 @@ class FaustEditor extends HTMLElement {
             if (node !== undefined) node.disconnect()
             node = (await generator.createNode(audioCtx))!
             if (node.numberOfInputs > 0) {
-                await getInputDevices()
+                audioInputSelector.disabled = false
+                updateInputDevices(await getInputDevices())
                 await connectInput()
+            } else {
+                audioInputSelector.disabled = true
+                audioInputSelector.innerHTML = "<option>Audio input</option>"
             }
             node.connect(audioCtx.destination)
             stopButton.disabled = false
@@ -500,14 +506,13 @@ class FaustEditor extends HTMLElement {
         const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
 
         const updateInputDevices = (devices: MediaDeviceInfo[]) => {
+            if (audioInputSelector.disabled) return
             while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove()
             for (const device of devices) {
                 if (device.kind === "audioinput") {
                     audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId))
                 }
             }
-            // TODO: Only enable audio input selector if Faust code accepts inputs.
-            audioInputSelector.disabled = false
         }
         deviceUpdateCallbacks.push(updateInputDevices)
 
