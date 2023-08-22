@@ -19,6 +19,8 @@ import {FaustUI} from "@shren/faust-ui"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import {library, icon} from "@fortawesome/fontawesome-svg-core"
 import {faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare, faChartLine} from "@fortawesome/free-solid-svg-icons"
+import Split from "split.js"
+
 import faustSvg from "./faustText.svg"
 import {Scope} from "./scope"
 
@@ -185,7 +187,6 @@ template.innerHTML = `
     }
 
     #sidebar {
-        border-left: 1px solid black;
         display: flex;
         max-width: 100%;
     }
@@ -218,7 +219,7 @@ template.innerHTML = `
     }
 
     #sidebar-buttons .button:hover {
-        background-color: #ccc;
+        background-color: #ddd;
     }
 
     #sidebar-buttons .button:active {
@@ -228,9 +229,9 @@ template.innerHTML = `
     #sidebar-content {
         background-color: #fff;
         display: none;
-        border-left: 1px solid black;
+        border-left: 1px solid #ccc;
         overflow: auto;
-        max-width: 350px;
+        flex-grow: 1;
         max-height: 100%;
     }
 
@@ -282,6 +283,17 @@ template.innerHTML = `
         background: #fff;
     }
 
+    .gutter {
+        background-color: #f5f5f5;
+        background-repeat: no-repeat;
+        background-position: 50%;
+    }
+    
+    .gutter.gutter-horizontal {
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+        cursor: col-resize;
+    }
+
     ${faustCSS}
 </style>
 `
@@ -303,6 +315,7 @@ class FaustEditor extends HTMLElement {
             ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`
         }
 
+        const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
         const editor = new EditorView({
             doc: code,
             extensions: [
@@ -333,17 +346,21 @@ class FaustEditor extends HTMLElement {
                 ]),
                 faustLanguage,
             ],
-            parent: this.shadowRoot!.querySelector("#editor")!,
+            parent: editorEl,
         })
 
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
         const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement
+        const sidebar = this.shadowRoot!.querySelector("#sidebar") as HTMLDivElement
         const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement
         const sidebarToggle = this.shadowRoot!.querySelector("#sidebar-toggle") as HTMLButtonElement
         const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[]
         const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[]
+
+        // TODO: Make editor take max width when sidebar is collapsed. Decide on gutter position (left or right of tab buttons).
+        Split([editorEl, sidebar], { sizes: [70, 30], gutterSize: 7 })
 
         faustPromise.then(() => runButton.disabled = false)
 
@@ -456,6 +473,8 @@ class FaustEditor extends HTMLElement {
             animPlot = requestAnimationFrame(drawSpectrum)
         }
 
+        // TODO: Don't show any tab as selected if sidebar is collapsed
+        // TODO: Consider whether there needs to be a dedicated expand/collapse button.
         const openTab = (i: number) => {
             setSidebarOpen(true)
             for (const [j, tab] of tabButtons.entries()) {
