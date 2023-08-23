@@ -109,7 +109,6 @@ template.innerHTML = `
         <div id="editor"></div>
         <div id="sidebar">
             <div id="sidebar-buttons">
-                <button title="Toggle sidebar" id="sidebar-toggle" class="button" disabled>${icon({ prefix: "fas", iconName: "angles-left" }).html[0]}</button>
                 <button title="Controls" id="tab-ui" class="button tab" disabled>${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
                 <button title="Block Diagram" id="tab-diagram" class="button tab" disabled>${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
                 <button title="Scope" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
@@ -191,11 +190,6 @@ template.innerHTML = `
         max-width: 100%;
     }
 
-    #sidebar-toggle {
-        border-bottom: 1px solid black;
-        flex-grow: 0;
-    }
-
     .tab {
         flex-grow: 1;
     }
@@ -228,7 +222,6 @@ template.innerHTML = `
 
     #sidebar-content {
         background-color: #fff;
-        display: none;
         border-left: 1px solid #ccc;
         overflow: auto;
         flex-grow: 1;
@@ -355,20 +348,16 @@ class FaustEditor extends HTMLElement {
         const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement
         const sidebar = this.shadowRoot!.querySelector("#sidebar") as HTMLDivElement
         const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement
-        const sidebarToggle = this.shadowRoot!.querySelector("#sidebar-toggle") as HTMLButtonElement
         const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[]
         const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[]
 
-        // TODO: Make editor take max width when sidebar is collapsed. Decide on gutter position (left or right of tab buttons).
-        Split([editorEl, sidebar], { sizes: [70, 30], gutterSize: 7 })
+        const split = Split([editorEl, sidebar], { sizes: [100, 0], minSize: [100, 20], gutterSize: 7, snapOffset: 150 })
 
         faustPromise.then(() => runButton.disabled = false)
 
-        let sidebarOpen = false
         const setSidebarOpen = (open: boolean) => {
-            sidebarOpen = open
-            sidebarContent.style.display = open ? "flex" : "none"
-            sidebarToggle.innerHTML = icon({ prefix: "fas", iconName: open ? "angles-right" : "angles-left" }).html[0]
+            // TODO: Maybe remember previous split size when re-opening.
+            split.setSizes(open ? [70, 30] : [100, 0])
         }
 
         let node: IFaustMonoWebAudioNode | undefined
@@ -421,7 +410,6 @@ class FaustEditor extends HTMLElement {
             for (const tabButton of tabButtons) {
                 tabButton.disabled = false
             }
-            sidebarToggle.disabled = false
             setSidebarOpen(true)
             // Clear old tab contents
             for (const tab of tabContents) {
@@ -474,7 +462,6 @@ class FaustEditor extends HTMLElement {
         }
 
         // TODO: Don't show any tab as selected if sidebar is collapsed
-        // TODO: Consider whether there needs to be a dedicated expand/collapse button.
         const openTab = (i: number) => {
             setSidebarOpen(true)
             for (const [j, tab] of tabButtons.entries()) {
@@ -504,10 +491,6 @@ class FaustEditor extends HTMLElement {
             tabButton.onclick = () => openTab(i)
         }
 
-        sidebarToggle.onclick = () => {
-            setSidebarOpen(!sidebarOpen)
-        }
-
         stopButton.onclick = () => {
             if (node !== undefined) {
                 node.disconnect()
@@ -515,7 +498,6 @@ class FaustEditor extends HTMLElement {
                 node = undefined
                 stopButton.disabled = true
                 setSidebarOpen(false)
-                sidebarToggle.disabled = true
                 for (const tabButton of tabButtons) {
                     tabButton.disabled = true
                 }
