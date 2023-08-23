@@ -361,13 +361,13 @@ class FaustEditor extends HTMLElement {
 
         faustPromise.then(() => runButton.disabled = false)
 
+        const defaultSizes = [70, 30]
         let sidebarOpen = false
-        const setSidebarOpen = (open: boolean) => {
-            // TODO: Maybe remember previous split size when re-opening.
-            if (open !== sidebarOpen) {
-                split.setSizes(open ? [70, 30] : [100, 0])
+        const openSidebar = () => {
+            if (!sidebarOpen) {
+                split.setSizes(defaultSizes)
             }
-            sidebarOpen = open
+            sidebarOpen = true
         }
 
         let node: IFaustMonoWebAudioNode | undefined
@@ -420,7 +420,7 @@ class FaustEditor extends HTMLElement {
             for (const tabButton of tabButtons) {
                 tabButton.disabled = false
             }
-            setSidebarOpen(true)
+            openSidebar()
             // Clear old tab contents
             for (const tab of tabContents) {
                 while (tab.lastChild) tab.lastChild.remove()
@@ -437,7 +437,7 @@ class FaustEditor extends HTMLElement {
             openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 3)
             // Create controls via Faust UI
             const faustUI = new FaustUI({ ui, root: faustUIRoot })
-            faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
+            faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
             // Create SVG block diagram
             setSVG(svgDiagrams.from("main", code, "")["process.svg"])
@@ -471,9 +471,7 @@ class FaustEditor extends HTMLElement {
             animPlot = requestAnimationFrame(drawSpectrum)
         }
 
-        // TODO: Don't show any tab as selected if sidebar is collapsed
         const openTab = (i: number) => {
-            setSidebarOpen(true)
             for (const [j, tab] of tabButtons.entries()) {
                 if (i === j) {
                     tab.classList.add("active")
@@ -507,10 +505,7 @@ class FaustEditor extends HTMLElement {
                 node.destroy()
                 node = undefined
                 stopButton.disabled = true
-                setSidebarOpen(false)
-                for (const tabButton of tabButtons) {
-                    tabButton.disabled = true
-                }
+                // TODO: Maybe disable controls in faust-ui tab.
             }
         }
 
