@@ -351,13 +351,23 @@ class FaustEditor extends HTMLElement {
         const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[]
         const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[]
 
-        const split = Split([editorEl, sidebar], { sizes: [100, 0], minSize: [100, 20], gutterSize: 7, snapOffset: 150 })
+        const split = Split([editorEl, sidebar], {
+            sizes: [100, 0],
+            minSize: [0, 20],
+            gutterSize: 7,
+            snapOffset: 150,
+            onDragEnd: () => { scope?.onResize(); spectrum?.onResize() },
+        })
 
         faustPromise.then(() => runButton.disabled = false)
 
+        let sidebarOpen = false
         const setSidebarOpen = (open: boolean) => {
             // TODO: Maybe remember previous split size when re-opening.
-            split.setSizes(open ? [70, 30] : [100, 0])
+            if (open !== sidebarOpen) {
+                split.setSizes(open ? [70, 30] : [100, 0])
+            }
+            sidebarOpen = open
         }
 
         let node: IFaustMonoWebAudioNode | undefined
