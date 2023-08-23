@@ -432,9 +432,9 @@ class FaustEditor extends HTMLElement {
             node.connect(analyser)
             scope = new Scope(tabContents[2])
             spectrum = new Scope(tabContents[3])
-            // If there are UI elements, open Faust UI (controls tab); otherwise open block diagram.
+            // If there are UI elements, open Faust UI (controls tab); otherwise open spectrum analyzer.
             const ui = node.getUI()
-            openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 1)
+            openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 3)
             // Create controls via Faust UI
             const faustUI = new FaustUI({ ui, root: faustUIRoot })
             faustUI.paramChangeByUI = (path, value) => node!.setParamValue(path, value)
