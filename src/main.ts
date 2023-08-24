@@ -1,16 +1,3 @@
-import {EditorView} from "codemirror"
-// Most of the basic CodeMirror setup, sans folds.
-import {lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, keymap} from "@codemirror/view"
-import {history, defaultKeymap, historyKeymap} from "@codemirror/commands"
-import {indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching} from "@codemirror/language"
-import {highlightSelectionMatches, searchKeymap} from "@codemirror/search"
-import {closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap} from "@codemirror/autocomplete"
-import {EditorState} from "@codemirror/state"
-// Custom CodeMirror setup
-import {StreamLanguage} from "@codemirror/language"
-import {clike} from "@codemirror/legacy-modes/mode/clike"
-import {lintKeymap, setDiagnostics, openLintPanel, closeLintPanel} from "@codemirror/lint"
-
 import {FaustCompiler, FaustMonoDspGenerator, FaustSvgDiagrams, IFaustMonoWebAudioNode, LibFaust, instantiateFaustModuleFromFile} from "@grame/faustwasm"
 import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
 import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
@@ -23,31 +10,11 @@ import Split from "split.js"
 
 import faustSvg from "./faustText.svg"
 import {Scope} from "./scope"
+import {clearError, createEditor, setError} from "./editor"
 
 for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAnglesLeft, faAnglesRight, faSliders, faDiagramProject, faWaveSquare, faChartLine]) {
     library.add(icon)
 }
-
-const keywords = "process component import library declare with environment route waveform soundfile"
-const atoms = "mem prefix int float rdtable rwtable select2 select3 ffunction fconstant fvariable button checkbox vslider hslider nentry vgroup hgroup tgroup vbargraph hbargraph attach acos asin atan atan2 cos sin tan exp log log10 pow sqrt abs min max fmod remainder floor ceil rint"
-
-function words(str: string) {
-    const obj: {[key: string]: true} = {}
-    const words = str.split(" ")
-    for (let i = 0; i < words.length; i++) obj[words[i]] = true
-    return obj
-}
-
-const faustLanguage = StreamLanguage.define(clike({
-    name: "clike",
-    multiLineStrings: true,
-    keywords: words(keywords),
-    atoms: words(atoms),
-    hooks: {
-        "@": () => "meta",
-        "'": () => "meta",
-    }
-}))
 
 const generator = new FaustMonoDspGenerator() // TODO: Support polyphony
 let compiler: FaustCompiler
@@ -309,38 +276,7 @@ class FaustEditor extends HTMLElement {
         }
 
         const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = new EditorView({
-            doc: code,
-            extensions: [
-                lineNumbers(),
-                highlightActiveLineGutter(),
-                highlightSpecialChars(),
-                history(),
-                // foldGutter(),
-                drawSelection(),
-                dropCursor(),
-                EditorState.allowMultipleSelections.of(true),
-                indentOnInput(),
-                syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-                bracketMatching(),
-                closeBrackets(),
-                autocompletion(),
-                rectangularSelection(),
-                crosshairCursor(),
-                highlightActiveLine(),
-                highlightSelectionMatches(),
-                keymap.of([
-                    ...closeBracketsKeymap,
-                    ...defaultKeymap,
-                    ...searchKeymap,
-                    ...historyKeymap,
-                    ...completionKeymap,
-                    ...lintKeymap
-                ]),
-                faustLanguage,
-            ],
-            parent: editorEl,
-        })
+        const editor = createEditor(editorEl, code)
 
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
@@ -386,23 +322,11 @@ class FaustEditor extends HTMLElement {
             try {
                 await generator.compile(compiler, "main", code, "")
             } catch (e: any) {
-                // Extract line number if available
-                const rawMessage = (e as Error).message.trim()
-                const match = rawMessage.match(/^main : (\d+) : (.*)$/)
-                const message = match ? match[2] : rawMessage
-                const { from, to } = match ? editor.state.doc.line(+match[1]) : { from: 0, to: 0 }
-                // Show error in editor
-                editor.dispatch(setDiagnostics(editor.state, [{
-                    from, to,
-                    severity: "error",
-                    message,
-                }]))
-                openLintPanel(editor)
+                setError(editor, e)
                 return
             }
             // Clear any old errors
-            editor.dispatch(setDiagnostics(editor.state, []))
-            closeLintPanel(editor)
+            clearError(editor)
 
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
