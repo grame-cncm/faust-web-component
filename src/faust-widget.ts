@@ -1,19 +1,15 @@
-// TODO: Work in progress
 import { icon } from "@fortawesome/fontawesome-svg-core"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import faustSvg from "./faustText.svg"
 import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
-import { faustPromise, audioCtx, generator, compiler, getInputDevices, svgDiagrams, deviceUpdateCallbacks } from "./common"
-import { Scope } from "./scope"
+import { faustPromise, audioCtx, generator, compiler, getInputDevices, deviceUpdateCallbacks } from "./common"
 
 const template = document.createElement("template")
 template.innerHTML = `
 <div id="root">
     <div id="controls">
-        <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
-        <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
-        <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
+        <button title="On/off" class="button" id="power" disabled>${icon({ prefix: "fas", iconName: "power-off" }).html[0]}</button>
         <select id="audio-input" class="dropdown" disabled>
             <option>Audio input</option>
         </select>
@@ -25,28 +21,15 @@ template.innerHTML = `
         <!-- TODO: volume control? <input id="volume" type="range" min="0" max="100"> -->
         <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
     </div>
-    <div id="content">
-        <div id="sidebar">
-            <div id="sidebar-buttons">
-                <button title="Controls" id="tab-ui" class="button tab" disabled>${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
-                <button title="Block Diagram" id="tab-diagram" class="button tab" disabled>${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
-                <button title="Scope" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
-                <button title="Spectrum" id="tab-spectrum" class="button tab" disabled>${icon({ prefix: "fas", iconName: "chart-line" }).html[0]}</button>
-            </div>
-            <div id="sidebar-content">
-                <div id="faust-ui"></div>
-                <div id="faust-diagram"></div>
-                <div id="faust-scope"></div>
-                <div id="faust-spectrum"></div>
-            </div>
-        </div>
-    </div>
+    <div id="faust-ui"></div>
 </div>
 <style>
     #root {
         border: 1px solid black;
         border-radius: 5px;
         box-sizing: border-box;
+        display: inline-block;
+        background-color: #384d64;
     }
 
     *, *:before, *:after {
@@ -54,86 +37,18 @@ template.innerHTML = `
     }
 
     #controls {
-        background-color: #384d64;
-        border-bottom: 1px solid black;
         display: flex;
+        margin-bottom: -20px;
+        position: relative;
+        z-index: 1;
     }
 
     #faust {
         margin-left: auto;
+        padding-left: 10px;
         margin-right: 10px;
         display: flex;
         align-items: center;
-    }
-
-    #faust-ui {
-        width: 232px;
-        max-height: 150px;
-    }
-
-    #faust-scope, #faust-spectrum {
-        min-width: 232px;
-        min-height: 150px;
-    }
-
-    #faust-diagram {
-        max-width: 232px;
-        height: 150px;
-    }
-
-    #content {
-        display: flex;
-    }
-
-    #sidebar {
-        display: flex;
-        max-width: 100%;
-    }
-
-    .tab {
-        flex-grow: 1;
-    }
-
-    #sidebar-buttons .tab.active {
-        background-color: #bbb;
-    }
-
-    #sidebar-buttons {
-        background-color: #f5f5f5;
-        display: flex;
-        flex-direction: column;
-    }
-
-    #sidebar-buttons .button {
-        background-color: #f5f5f5;
-        color: #000;
-        width: 20px;
-        height: 20px;
-        padding: 4px;
-    }
-
-    #sidebar-buttons .button:hover {
-        background-color: #ddd;
-    }
-
-    #sidebar-buttons .button:active {
-        background-color: #aaa;
-    }
-
-    #sidebar-content {
-        background-color: #fff;
-        border-left: 1px solid #ccc;
-        overflow: auto;
-        flex-grow: 1;
-        max-height: 100%;
-    }
-
-    #sidebar-content > div {
-        display: none;
-    }
-
-    #sidebar-content > div.active {
-        display: block;
     }
 
     a.button {
@@ -176,17 +91,6 @@ template.innerHTML = `
         background: #fff;
     }
 
-    .gutter {
-        background-color: #f5f5f5;
-        background-repeat: no-repeat;
-        background-position: 50%;
-    }
-    
-    .gutter.gutter-horizontal {
-        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
-        cursor: col-resize;
-    }
-
     ${faustCSS}
 </style>
 `
@@ -200,47 +104,40 @@ export default class FaustWidget extends HTMLElement {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
         this.attachShadow({mode: "open"}).appendChild(template.content.cloneNode(true))
 
-        const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
-        // Open code in IDE
-        const urlParams = new URLSearchParams()
-        urlParams.set("inline", btoa(code).replace("+", "-").replace("/", "_"))
-        ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`
-
-        const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
-        const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
+        const powerButton = this.shadowRoot!.querySelector("#power") as HTMLButtonElement
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
-        const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement
-        const sidebar = this.shadowRoot!.querySelector("#sidebar") as HTMLDivElement
-        const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement
-        const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[]
-        const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[]
 
-        faustPromise.then(() => runButton.disabled = false)
+        faustPromise.then(() => powerButton.disabled = false)
 
+        let on = false
         let node: IFaustMonoWebAudioNode | undefined
         let input: MediaStreamAudioSourceNode | undefined
-        let analyser: AnalyserNode | undefined
-        let scope: Scope | undefined
-        let spectrum: Scope | undefined
+        let faustUI: FaustUI
 
-        const run = async () => {
+        const setup = async () => {
+            await faustPromise
+            // Compile Faust code
+            await generator.compile(compiler, "main", code, "")
+            // Create controls via Faust UI
+            const ui = JSON.parse(generator.factory!.json).ui
+            faustUI = new FaustUI({ ui, root: faustUIRoot })
+            faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
+            faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
+            faustUI.resize()
+        }
+
+        const start = async () => {
             if (audioCtx.state === "suspended") {
                 await audioCtx.resume()
             }
-            await faustPromise
-            // Compile Faust code
-            try {
-                await generator.compile(compiler, "main", code, "")
-            } catch (e: any) {
-                // setError(editor, e)
-                return
-            }
-            // Clear any old errors
-            // clearError(editor)
-
             // Create an audio node from compiled Faust
-            if (node !== undefined) node.disconnect()
-            node = (await generator.createNode(audioCtx))!
+            if (node === undefined) {
+                node = (await generator.createNode(audioCtx))!
+            }
+
+            faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
+            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
+
             if (node.numberOfInputs > 0) {
                 audioInputSelector.disabled = false
                 updateInputDevices(await getInputDevices())
@@ -250,97 +147,21 @@ export default class FaustWidget extends HTMLElement {
                 audioInputSelector.innerHTML = "<option>Audio input</option>"
             }
             node.connect(audioCtx.destination)
-            stopButton.disabled = false
-            for (const tabButton of tabButtons) {
-                tabButton.disabled = false
-            }
-            // openSidebar()
-            // Clear old tab contents
-            for (const tab of tabContents) {
-                while (tab.lastChild) tab.lastChild.remove()
-            }
-            // Create scope & spectrum plots
-            analyser = new AnalyserNode(audioCtx, {
-                fftSize: Math.pow(2, 11), minDecibels: -96, maxDecibels: 0, smoothingTimeConstant: 0.85
-            })
-            node.connect(analyser)
-            scope = new Scope(tabContents[2])
-            spectrum = new Scope(tabContents[3])
-            // If there are UI elements, open Faust UI (controls tab); otherwise open spectrum analyzer.
-            const ui = node.getUI()
-            openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 3)
-            // Create controls via Faust UI
-            const faustUI = new FaustUI({ ui, root: faustUIRoot })
-            faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
-            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
-            // Create SVG block diagram
-            setSVG(svgDiagrams.from("main", code, "")["process.svg"])
+            powerButton.style.color = "#ffa500"
         }
 
-        const setSVG = (svgString: string) => {
-            faustDiagram.innerHTML = svgString
+        const stop = () => {
+            node?.disconnect()
+            powerButton.style.color = "#fff"
+        }
 
-            for (const a of faustDiagram.querySelectorAll("a")) {
-                a.onclick = e => {
-                    e.preventDefault()
-                    const filename = (a.href as any as SVGAnimatedString).baseVal
-                    const svgString = compiler.fs().readFile("main-svg/" + filename, { encoding: "utf8" }) as string
-                    setSVG(svgString)
-                }
+        powerButton.onclick = () => {
+            if (on) {
+                stop()
+            } else {
+                start()
             }
-        }
-
-        let animPlot: number | undefined
-        const drawScope = () => {
-            scope!.renderScope([{
-                analyser: analyser!,
-                style: "rgb(212, 100, 100)",
-                edgeThreshold: 0.09,
-            }])
-            animPlot = requestAnimationFrame(drawScope)
-        }
-
-        const drawSpectrum = () => {
-            spectrum!.renderSpectrum(analyser!)
-            animPlot = requestAnimationFrame(drawSpectrum)
-        }
-
-        const openTab = (i: number) => {
-            for (const [j, tab] of tabButtons.entries()) {
-                if (i === j) {
-                    tab.classList.add("active")
-                    tabContents[j].classList.add("active")
-                } else {
-                    tab.classList.remove("active")
-                    tabContents[j].classList.remove("active")
-                }
-            }
-            if (i === 2) {
-                scope!.onResize()
-                if (animPlot !== undefined) cancelAnimationFrame(animPlot)
-                animPlot = requestAnimationFrame(drawScope)
-            } else if (i === 3) {
-                spectrum!.onResize()
-                if (animPlot !== undefined) cancelAnimationFrame(animPlot)
-                animPlot = requestAnimationFrame(drawSpectrum)
-            } else if (animPlot !== undefined) {
-                cancelAnimationFrame(animPlot)
-                animPlot = undefined
-            }
-        }
-
-        for (const [i, tabButton] of tabButtons.entries()) {
-            tabButton.onclick = () => openTab(i)
-        }
-
-        stopButton.onclick = () => {
-            if (node !== undefined) {
-                node.disconnect()
-                node.destroy()
-                node = undefined
-                stopButton.disabled = true
-                // TODO: Maybe disable controls in faust-ui tab.
-            }
+            on = !on
         }
 
         const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
@@ -371,6 +192,6 @@ export default class FaustWidget extends HTMLElement {
 
         audioInputSelector.onchange = connectInput
 
-        run()
+        setup()
     }
 }

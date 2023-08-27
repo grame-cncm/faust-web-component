@@ -53,6 +53,16 @@ process =
     dm.zita_light; // stereo reverb
                 -->
             </faust-editor>
+            <p>Minus, ducimus consequuntur? Corrupti animi aut magni nihil, dolor eos tenetur, autem deserunt et iure culpa, suscipit minus quia velit laudantium asperiores.</p>
+            <faust-widget>
+<!--
+import("stdfaust.lib");
+ctFreq = hslider("cutoffFrequency",500,50,10000,0.01);
+q = hslider("q",5,1,30,0.1);
+gain = hslider("gain",1,0,1,0.01);
+process = no.noise : fi.resonlp(ctFreq,q,gain);
+-->
+            </faust-widget>
         </div>
     </body>
 </html>
