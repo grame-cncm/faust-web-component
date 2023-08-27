@@ -17,9 +17,11 @@ template.innerHTML = `
         <select id="audio-input" class="dropdown" disabled>
             <option>Audio input</option>
         </select>
+        <!-- TODO: MIDI input
         <select id="midi-input" class="dropdown" disabled>
             <option>MIDI input</option>
         </select>
+        -->
         <!-- TODO: volume control? <input id="volume" type="range" min="0" max="100"> -->
         <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
     </div>
