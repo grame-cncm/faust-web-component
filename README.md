@@ -44,6 +44,7 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 We plan to soon publish a package on npm soon so that you can use a CDN for hosting.
 
 ## Build Instructions
+
 Clone this repository, then run:
 ```shell
 npm install
@@ -51,3 +52,17 @@ npm run build
 ```
 
 This will generate and `dist/faust-web-component.js` and `dist/faust-web-component.umd.cjs`; use can use the former with an ESM `import` statement (or `<script type="module">`), and you can use the latter with a classic `<script>` tag.
+
+## Demo
+
+A concrete use-case can be seen in the this [updated version](https://ijc8.me/faustdoc/) of the Faust documentation site.
+
+## TODO
+
+Several steps needs to be done before official release:
+
+- add MIDI control for DSP
+- polyphony support with MIDI
+- audio input via file (including some stock signals)
+- greater configurability via HTML attributes
+- package publication on npm
