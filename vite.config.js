@@ -5,8 +5,9 @@ export default defineConfig({
     build: {
         lib: {
             entry: resolve(__dirname, "src/main.ts"),
-            name: "faust-web-component",
-            fileName: "faust-web-component",
+            name: "faust_web_component",
+            formats: ["iife"],
+            fileName: () => "faust-web-component.js",
         },
     },
 })

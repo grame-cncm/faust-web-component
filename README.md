@@ -51,7 +51,7 @@ npm install
 npm run build
 ```
 
-This will generate and `dist/faust-web-component.js` and `dist/faust-web-component.umd.cjs`; you can use the former with an ESM `import` statement (or `<script type="module">`), and you can use the latter with a classic `<script>` tag.
+This will generate `dist/faust-web-component.js`, which you can use with a `<script>` tag as in the above example.
 
 ## Demo
 
