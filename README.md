@@ -2,11 +2,11 @@
 
 This package provides two [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) for embedding interactive [Faust](https://faust.grame.fr) snippets in web pages.
 
-`<faust-editor>` displays an editor (using [CodeMirror 6](https://codemirror.net/)) with executable, editable Faust code, along with some bells & whistles (controls, block diagram, plots) in a side pane.
+-`<faust-editor>` displays an editor (using [CodeMirror 6](https://codemirror.net/)) with executable, editable Faust code, along with some bells & whistles (controls, block diagram, plots) in a side pane.
 This component is ideal for demonstrating some code in Faust and allowing the reader to try it out and tweak it themselves without having to leave the page.
 (For more extensive work, it also includes a button to open the code in the Faust IDE.)
 
-`<faust-widget>` just shows the controls and does not allow editing, so it serves simply as a way to embed interactive DSP.
+-`<faust-widget>` just shows the controls and does not allow editing, so it serves simply as a way to embed interactive DSP.
 
 These components are built on top of [faustwasm](https://github.com/grame-cncm/faustwasm) and [faust-ui](https://github.com/Fr0stbyteR/faust-ui).
 
@@ -46,12 +46,13 @@ We plan to soon publish a package on npm soon so that you can use a CDN for host
 ## Build Instructions
 
 Clone this repository, then run:
+
 ```shell
 npm install
 npm run build
 ```
 
-This will generate and `dist/faust-web-component.js` and `dist/faust-web-component.umd.cjs`; use can use the former with an ESM `import` statement (or `<script type="module">`), and you can use the latter with a classic `<script>` tag.
+This will generate and `dist/faust-web-component.js` and `dist/faust-web-component.umd.cjs`; you can use the former with an ESM `import` statement (or `<script type="module">`), and you can use the latter with a classic `<script>` tag.
 
 ## Demo
 
