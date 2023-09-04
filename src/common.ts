@@ -74,3 +74,19 @@ export async function accessMIDIDevice(
         }
     });
 }
+
+export const midiInputCallback = (node: IFaustPolyWebAudioNode | undefined) => {
+    return (data) => {
+
+        const cmd = data[0] >> 4;
+        const channel = data[0] & 0xf;
+        const data1 = data[1];
+        const data2 = data[2];
+
+        if (channel === 9) return;
+        else if (cmd === 8 || (cmd === 9 && data2 === 0)) node.keyOff(channel, data1, data2);
+        else if (cmd === 9) node.keyOn(channel, data1, data2);
+        else if (cmd === 11) node.ctrlChange(channel, data1, data2);
+        else if (cmd === 14) node.pitchWheel(channel, (data2 * 128.0 + data1));
+    }
+}
