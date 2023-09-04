@@ -1,4 +1,4 @@
-import { FaustCompiler, FaustMonoDspGenerator, FaustSvgDiagrams, LibFaust, instantiateFaustModuleFromFile } from "@grame/faustwasm"
+import { FaustCompiler, FaustMonoDspGenerator, FaustPolyDspGenerator, FaustSvgDiagrams, LibFaust, instantiateFaustModuleFromFile } from "@grame/faustwasm"
 import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
 import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
 import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
@@ -11,7 +11,8 @@ for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAn
 
 export let compiler: FaustCompiler
 export let svgDiagrams: FaustSvgDiagrams
-export const generator = new FaustMonoDspGenerator() // TODO: Support polyphony
+export const mono_generator = new FaustMonoDspGenerator() // TODO: Support polyphony
+export const poly_generator = new FaustPolyDspGenerator() // TODO: Support polyphony
 
 async function loadFaust() {
     // Setup Faust

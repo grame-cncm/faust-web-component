@@ -3,7 +3,7 @@ import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import Split from "split.js"
-import { faustPromise, audioCtx, compiler, svgDiagrams, generator, getInputDevices, deviceUpdateCallbacks } from "./common"
+import { faustPromise, audioCtx, compiler, svgDiagrams, mono_generator, getInputDevices, deviceUpdateCallbacks } from "./common"
 import { createEditor, setError, clearError } from "./editor"
 import { Scope } from "./scope"
 import faustSvg from "./faustText.svg"
@@ -219,7 +219,7 @@ export default class FaustEditor extends HTMLElement {
 
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({mode: "open"}).appendChild(template.content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
         ideLink.onfocus = () => {
@@ -274,7 +274,7 @@ export default class FaustEditor extends HTMLElement {
             // Compile Faust code
             const code = editor.state.doc.toString()
             try {
-                await generator.compile(compiler, "main", code, "")
+                await mono_generator.compile(compiler, "main", code, "")
             } catch (e: any) {
                 setError(editor, e)
                 return
@@ -284,7 +284,7 @@ export default class FaustEditor extends HTMLElement {
 
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
-            node = (await generator.createNode(audioCtx))!
+            node = (await mono_generator.createNode(audioCtx))!
             if (node.numberOfInputs > 0) {
                 audioInputSelector.disabled = false
                 updateInputDevices(await getInputDevices())

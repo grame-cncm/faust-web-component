@@ -2,8 +2,9 @@ import { icon } from "@fortawesome/fontawesome-svg-core"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import faustSvg from "./faustText.svg"
 import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
+import { IFaustPolyWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
-import { faustPromise, audioCtx, generator, compiler, getInputDevices, deviceUpdateCallbacks } from "./common"
+import { faustPromise, audioCtx, mono_generator, poly_generator, compiler, getInputDevices, deviceUpdateCallbacks } from "./common"
 
 const template = document.createElement("template")
 template.innerHTML = `
@@ -110,16 +111,19 @@ export default class FaustWidget extends HTMLElement {
         faustPromise.then(() => powerButton.disabled = false)
 
         let on = false
-        let node: IFaustMonoWebAudioNode | undefined
+        //let node: IFaustMonoWebAudioNode | undefined
+        let node: IFaustPolyWebAudioNode | undefined
         let input: MediaStreamAudioSourceNode | undefined
         let faustUI: FaustUI
 
         const setup = async () => {
             await faustPromise
             // Compile Faust code
-            await generator.compile(compiler, "main", code, "")
+            await mono_generator.compile(compiler, "main", code, "")
+            //await poly_generator.compile(compiler, "main", code, "")
             // Create controls via Faust UI
-            const ui = generator.getUI()
+            const ui = mono_generator.getUI()
+            //const ui = poly_generator.getUI()
             faustUI = new FaustUI({ ui, root: faustUIRoot })
             faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
@@ -132,7 +136,8 @@ export default class FaustWidget extends HTMLElement {
             }
             // Create an audio node from compiled Faust
             if (node === undefined) {
-                node = (await generator.createNode(audioCtx))!
+                node = (await mono_generator.createNode(audioCtx))!
+                //node = (await poly_generator.createNode(audioCtx, 16))!
             }
 
             faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
