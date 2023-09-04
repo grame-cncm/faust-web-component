@@ -1,6 +1,5 @@
 {
-    "name": "faust-web-component",
-    "private": true,
+    "name": "@grame/faust-web-component",
     "version": "0.1.0",
     "type": "module",
     "scripts": {
@@ -8,6 +7,22 @@
         "build": "vite build",
         "preview": "vite preview"
     },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/grame-cncm/faust-web-component.git"
+    },
+    "keywords": [
+        "faust",
+        "webassembly",
+        "audio",
+        "signal processing"
+    ],
+    "author": "Grame-CNCM",
+    "license": "LGPL-3.0",
+    "bugs": {
+        "url": "https://github.com/grame-cncm/faust-web-component/issues"
+    },
+    "homepage": "https://github.com/grame-cncm/faust-web-component#readme",
     "devDependencies": {
         "typescript": "^5.0.2",
         "vite": "^4.4.5"
