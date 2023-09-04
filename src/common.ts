@@ -48,3 +48,29 @@ export async function getInputDevices() {
     await getInputDevicesPromise
     return devices
 }
+
+export async function accessMIDIDevice(
+    onMIDIMessage: (data) => void
+): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        if (navigator.requestMIDIAccess) {
+            navigator
+                .requestMIDIAccess()
+                .then((midiAccess) => {
+                    const inputDevices = midiAccess.inputs.values();
+                    let midiInput: WebMidi.MIDIInput | null = null;
+                    for (const midiInput of inputDevices) {
+                        midiInput.onmidimessage = (event) => {
+                            onMIDIMessage(event.data);
+                        };
+                        resolve();
+                    }
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        } else {
+            reject(new Error('Web MIDI API is not supported by this browser.'));
+        }
+    });
+}

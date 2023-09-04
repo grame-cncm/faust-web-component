@@ -4,7 +4,7 @@ import faustSvg from "./faustText.svg"
 import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
 import { IFaustPolyWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
-import { faustPromise, audioCtx, mono_generator, poly_generator, compiler, getInputDevices, deviceUpdateCallbacks } from "./common"
+import { faustPromise, audioCtx, mono_generator, poly_generator, compiler, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice } from "./common"
 
 const template = document.createElement("template")
 template.innerHTML = `
@@ -119,11 +119,11 @@ export default class FaustWidget extends HTMLElement {
         const setup = async () => {
             await faustPromise
             // Compile Faust code
-            await mono_generator.compile(compiler, "main", code, "")
-            //await poly_generator.compile(compiler, "main", code, "")
+            //await mono_generator.compile(compiler, "main", code, "")
+            await poly_generator.compile(compiler, "main", code, "")
             // Create controls via Faust UI
-            const ui = mono_generator.getUI()
-            //const ui = poly_generator.getUI()
+            //const ui = mono_generator.getUI()
+            const ui = poly_generator.getUI()
             faustUI = new FaustUI({ ui, root: faustUIRoot })
             faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
@@ -136,8 +136,8 @@ export default class FaustWidget extends HTMLElement {
             }
             // Create an audio node from compiled Faust
             if (node === undefined) {
-                node = (await mono_generator.createNode(audioCtx))!
-                //node = (await poly_generator.createNode(audioCtx, 16))!
+                //node = (await mono_generator.createNode(audioCtx))!
+                node = (await poly_generator.createNode(audioCtx, 16))!
             }
 
             faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
@@ -151,6 +151,15 @@ export default class FaustWidget extends HTMLElement {
                 audioInputSelector.disabled = true
                 audioInputSelector.innerHTML = "<option>Audio input</option>"
             }
+
+            accessMIDIDevice(midiInputCallback(node))
+                .then(() => {
+                    console.log('Successfully connected to the MIDI device.');
+                })
+                .catch((error) => {
+                    console.error('Error accessing MIDI device:', error.message);
+                });
+
             node.connect(audioCtx.destination)
             powerButton.style.color = "#ffa500"
         }
@@ -170,6 +179,22 @@ export default class FaustWidget extends HTMLElement {
         }
 
         const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
+
+        const midiInputCallback = (node: IFaustPolyWebAudioNode | undefined) => {
+            return (data) => {
+
+                const cmd = data[0] >> 4;
+                const channel = data[0] & 0xf;
+                const data1 = data[1];
+                const data2 = data[2];
+
+                if (channel === 9) return;
+                else if (cmd === 8 || (cmd === 9 && data2 === 0)) node.keyOff(channel, data1, data2);
+                else if (cmd === 9) node.keyOn(channel, data1, data2);
+                else if (cmd === 11) node.ctrlChange(channel, data1, data2);
+                else if (cmd === 14) node.pitchWheel(channel, (data2 * 128.0 + data1));
+            }
+        }
 
         const updateInputDevices = (devices: MediaDeviceInfo[]) => {
             if (audioInputSelector.disabled) return
@@ -200,3 +225,4 @@ export default class FaustWidget extends HTMLElement {
         setup()
     }
 }
+
