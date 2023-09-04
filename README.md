@@ -61,8 +61,6 @@ A concrete use-case can be seen in the this [updated version](https://ijc8.me/fa
 
 Several steps needs to be done before official release:
 
-- add MIDI control for DSP
-- polyphony support with MIDI
 - audio input via file (including some stock signals)
 - greater configurability via HTML attributes
 - package publication on npm
