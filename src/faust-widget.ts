@@ -102,7 +102,7 @@ export default class FaustWidget extends HTMLElement {
 
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({mode: "open"}).appendChild(template.content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true))
 
         const powerButton = this.shadowRoot!.querySelector("#power") as HTMLButtonElement
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
@@ -119,7 +119,7 @@ export default class FaustWidget extends HTMLElement {
             // Compile Faust code
             await generator.compile(compiler, "main", code, "")
             // Create controls via Faust UI
-            const ui = JSON.parse(generator.factory!.json).ui
+            const ui = generator.getUI()
             faustUI = new FaustUI({ ui, root: faustUIRoot })
             faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"

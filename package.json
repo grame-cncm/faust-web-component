@@ -1,24 +1,24 @@
 {
-  "name": "faust-web-component",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5"
-  },
-  "dependencies": {
-    "@codemirror/legacy-modes": "^6.3.3",
-    "@fortawesome/fontawesome-svg-core": "^6.4.2",
-    "@fortawesome/free-solid-svg-icons": "^6.4.2",
-    "@grame/faustwasm": "^0.0.32",
-    "@shren/faust-ui": "^1.1.2",
-    "codemirror": "^6.0.1",
-    "split.js": "^1.6.5"
-  }
+    "name": "faust-web-component",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.2",
+        "vite": "^4.4.5"
+    },
+    "dependencies": {
+        "@codemirror/legacy-modes": "^6.3.3",
+        "@fortawesome/fontawesome-svg-core": "^6.4.2",
+        "@fortawesome/free-solid-svg-icons": "^6.4.2",
+        "@grame/faustwasm": "^0.0.34",
+        "@shren/faust-ui": "^1.1.2",
+        "codemirror": "^6.0.1",
+        "split.js": "^1.6.5"
+    }
 }

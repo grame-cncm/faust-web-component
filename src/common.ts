@@ -19,7 +19,6 @@ async function loadFaust() {
     const libFaust = new LibFaust(module)
     compiler = new FaustCompiler(libFaust)
     svgDiagrams = new FaustSvgDiagrams(compiler)
-
 }
 
 export const faustPromise = loadFaust()
