@@ -1,4 +1,4 @@
-import { FaustCompiler, FaustMonoDspGenerator, FaustPolyDspGenerator, FaustSvgDiagrams, LibFaust, instantiateFaustModuleFromFile } from "@grame/faustwasm"
+import { IFaustMonoWebAudioNode, IFaustPolyWebAudioNode, FaustCompiler, FaustMonoDspGenerator, FaustPolyDspGenerator, FaustSvgDiagrams, LibFaust, instantiateFaustModuleFromFile } from "@grame/faustwasm"
 import jsURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.js?url"
 import dataURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.data?url"
 import wasmURL from "@grame/faustwasm/libfaust-wasm/libfaust-wasm.wasm?url"
@@ -76,7 +76,7 @@ export async function accessMIDIDevice(
 }
 
 // Set up MIDI input callback
-export const midiInputCallback = (node: IFaustPolyWebAudioNode | undefined) => {
+export const midiInputCallback = (node: IFaustMonoWebAudioNode | IFaustPolyWebAudioNode) => {
     return (data) => {
 
         const cmd = data[0] >> 4;
