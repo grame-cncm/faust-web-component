@@ -4,7 +4,7 @@ import faustSvg from "./faustText.svg"
 import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
 import { IFaustPolyWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
-import { faustPromise, audioCtx, mono_generator, poly_generator, compiler, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback } from "./common"
+import { faustPromise, audioCtx, mono_generator, poly_generator, compiler, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices } from "./common"
 
 const template = document.createElement("template")
 template.innerHTML = `
@@ -111,33 +111,55 @@ export default class FaustWidget extends HTMLElement {
         faustPromise.then(() => powerButton.disabled = false)
 
         let on = false
-        //let node: IFaustMonoWebAudioNode | undefined
-        let node: IFaustPolyWebAudioNode | undefined
+        let gmidi = false
+        let gnvoices = -1
+        let node: IFaustMonoWebAudioNode | IFaustPolyWebAudioNode
         let input: MediaStreamAudioSourceNode | undefined
         let faustUI: FaustUI
 
         const setup = async () => {
             await faustPromise
-            // Compile Faust code
-            //await mono_generator.compile(compiler, "main", code, "")
-            await poly_generator.compile(compiler, "main", code, "")
-            // Create controls via Faust UI
-            //const ui = mono_generator.getUI()
-            const ui = poly_generator.getUI()
-            faustUI = new FaustUI({ ui, root: faustUIRoot })
-            faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
-            faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
-            faustUI.resize()
+            // Compile Faust code to access JSON metadata
+            await mono_generator.compile(compiler, "main", code, "")
+            const json = mono_generator.getMeta()
+            let { midi, nvoices } = extractMidiAndNvoices(json);
+            gmidi = midi;
+            gnvoices = nvoices;
+
+            // Build the generator and generate UI
+            const generator = nvoices > 0 ? poly_generator : mono_generator;
+            await generator.compile(compiler, "main", code, "");
+            const ui = generator.getUI();
+
+            faustUI = new FaustUI({ ui, root: faustUIRoot });
+            faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px";
+            faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px";
+            faustUI.resize();
         }
 
         const start = async () => {
             if (audioCtx.state === "suspended") {
                 await audioCtx.resume()
             }
+
             // Create an audio node from compiled Faust
             if (node === undefined) {
-                //node = (await mono_generator.createNode(audioCtx))!
-                node = (await poly_generator.createNode(audioCtx, 16))!
+                if (gnvoices > 0) {
+                    node = (await poly_generator.createNode(audioCtx, gnvoices))!
+                } else {
+                    node = (await mono_generator.createNode(audioCtx))!
+                }
+            }
+
+            // Access MIDI device
+            if (gmidi) {
+                accessMIDIDevice(midiInputCallback(node))
+                    .then(() => {
+                        console.log('Successfully connected to the MIDI device.');
+                    })
+                    .catch((error) => {
+                        console.error('Error accessing MIDI device:', error.message);
+                    });
             }
 
             faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
@@ -151,14 +173,6 @@ export default class FaustWidget extends HTMLElement {
                 audioInputSelector.disabled = true
                 audioInputSelector.innerHTML = "<option>Audio input</option>"
             }
-
-            accessMIDIDevice(midiInputCallback(node))
-                .then(() => {
-                    console.log('Successfully connected to the MIDI device.');
-                })
-                .catch((error) => {
-                    console.error('Error accessing MIDI device:', error.message);
-                });
 
             node.connect(audioCtx.destination)
             powerButton.style.color = "#ffa500"

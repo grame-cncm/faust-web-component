@@ -75,6 +75,7 @@ export async function accessMIDIDevice(
     });
 }
 
+// Set up MIDI input callback
 export const midiInputCallback = (node: IFaustPolyWebAudioNode | undefined) => {
     return (data) => {
 
@@ -88,5 +89,26 @@ export const midiInputCallback = (node: IFaustPolyWebAudioNode | undefined) => {
         else if (cmd === 9) node.keyOn(channel, data1, data2);
         else if (cmd === 11) node.ctrlChange(channel, data1, data2);
         else if (cmd === 14) node.pitchWheel(channel, (data2 * 128.0 + data1));
+    }
+}
+
+// Analyze the metadata of a Faust JSON file extract the [midi:on] and [nvoices:n] options
+export function extractMidiAndNvoices(jsonData: JSONData): { midi: boolean, nvoices: number } {
+    const optionsMetadata = jsonData.meta.find(meta => meta.options);
+    if (optionsMetadata) {
+        const options = optionsMetadata.options;
+
+        const midiRegex = /\[midi:(on|off)\]/;
+        const nvoicesRegex = /\[nvoices:(\d+)\]/;
+
+        const midiMatch = options.match(midiRegex);
+        const nvoicesMatch = options.match(nvoicesRegex);
+
+        const midi = midiMatch ? midiMatch[1] === "on" : false;
+        const nvoices = nvoicesMatch ? parseInt(nvoicesMatch[1]) : -1;
+
+        return { midi, nvoices };
+    } else {
+        return { midi: false, nvoices: -1 };
     }
 }

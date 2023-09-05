@@ -3,7 +3,7 @@ import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import Split from "split.js"
-import { faustPromise, audioCtx, compiler, svgDiagrams, mono_generator, getInputDevices, deviceUpdateCallbacks } from "./common"
+import { faustPromise, audioCtx, compiler, svgDiagrams, mono_generator, poly_generator, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices } from "./common"
 import { createEditor, setError, clearError } from "./editor"
 import { Scope } from "./scope"
 import faustSvg from "./faustText.svg"
@@ -265,6 +265,9 @@ export default class FaustEditor extends HTMLElement {
         let analyser: AnalyserNode | undefined
         let scope: Scope | undefined
         let spectrum: Scope | undefined
+        let gmidi = false
+        let gnvoices = -1
+
 
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
@@ -273,8 +276,19 @@ export default class FaustEditor extends HTMLElement {
             await faustPromise
             // Compile Faust code
             const code = editor.state.doc.toString()
+            let generator = null
             try {
+                // Compile Faust code to access JSON metadata
                 await mono_generator.compile(compiler, "main", code, "")
+                const json = mono_generator.getMeta()
+                let { midi, nvoices } = extractMidiAndNvoices(json);
+                gmidi = midi;
+                gnvoices = nvoices;
+
+                // Build the generator
+                generator = nvoices > 0 ? poly_generator : mono_generator;
+                await generator.compile(compiler, "main", code, "");
+
             } catch (e: any) {
                 setError(editor, e)
                 return
@@ -284,7 +298,11 @@ export default class FaustEditor extends HTMLElement {
 
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
-            node = (await mono_generator.createNode(audioCtx))!
+            if (gnvoices > 0) {
+                node = (await poly_generator.createNode(audioCtx, gnvoices))!
+            } else {
+                node = (await mono_generator.createNode(audioCtx))!
+            }
             if (node.numberOfInputs > 0) {
                 audioInputSelector.disabled = false
                 updateInputDevices(await getInputDevices())
@@ -298,6 +316,18 @@ export default class FaustEditor extends HTMLElement {
             for (const tabButton of tabButtons) {
                 tabButton.disabled = false
             }
+
+            // Access MIDI device
+            if (gmidi) {
+                accessMIDIDevice(midiInputCallback(node))
+                    .then(() => {
+                        console.log('Successfully connected to the MIDI device.');
+                    })
+                    .catch((error) => {
+                        console.error('Error accessing MIDI device:', error.message);
+                    });
+            }
+
             openSidebar()
             // Clear old tab contents
             for (const tab of tabContents) {
@@ -310,13 +340,16 @@ export default class FaustEditor extends HTMLElement {
             node.connect(analyser)
             scope = new Scope(tabContents[2])
             spectrum = new Scope(tabContents[3])
+
             // If there are UI elements, open Faust UI (controls tab); otherwise open spectrum analyzer.
             const ui = node.getUI()
             openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 3)
+
             // Create controls via Faust UI
             const faustUI = new FaustUI({ ui, root: faustUIRoot })
             faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
+
             // Create SVG block diagram
             setSVG(svgDiagrams.from("main", code, "")["process.svg"])
         }
