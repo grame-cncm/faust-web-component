@@ -18,7 +18,7 @@ npm install
 npm run build
 ```
 
-This will generate `dist/faust-web-component.js`, which you can use with a `<script>` tag as in the above example.
+This will generate `dist/faust-web-component.js`, which you can use with a `<script>` tag.
 
 ## Example Usage
 
@@ -53,7 +53,7 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 
 ## NPM package 
 
- A npm package [can be used](https://www.npmjs.com/package/@grame/faust-web-component) with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.3/dist/faust-web-component.js.
+ A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.3/dist/faust-web-component.js (possibly update the version number).
  
  Here is an HTML example using this model:
  
@@ -64,7 +64,7 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 <!--
 import("stdfaust.lib");
 
-vol = hslider("volume [unit:dB]", 0, -96, 0, 0.1) : ba.db2linear : si.smoo;
+vol = hslider("volume [unit:dB]", -10, -96, 0, 0.1) : ba.db2linear : si.smoo;
 freq1 = hslider("freq1 [unit:Hz]", 1000, 20, 3000, 1);
 freq2 = hslider("freq2 [unit:Hz]", 200, 20, 3000, 1);
 
