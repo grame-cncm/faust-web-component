@@ -9,6 +9,17 @@ This component is ideal for demonstrating some code in Faust and allowing the re
 
 These components are built on top of [faustwasm](https://github.com/grame-cncm/faustwasm) and [faust-ui](https://github.com/Fr0stbyteR/faust-ui) packages.
 
+## Build Instructions
+
+Clone this repository, then run:
+
+```shell
+npm install
+npm run build
+```
+
+This will generate `dist/faust-web-component.js`, which you can use with a `<script>` tag as in the above example.
+
 ## Example Usage
 
 ```html
@@ -40,18 +51,29 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 <script src="faust-web-component.js"></script>
 ```
 
-We plan to soon publish a package on npm soon so that you can use a CDN for hosting.
+## NPM package 
 
-## Build Instructions
+ A npm package [can be used](https://www.npmjs.com/package/@grame/faust-web-component) with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.3/dist/faust-web-component.js.
+ 
+ Here is an HTML example using this model:
+ 
+```html
+<p><em>Here's an embedded editor!</em></p>
 
-Clone this repository, then run:
+<faust-editor>
+<!--
+import("stdfaust.lib");
 
-```shell
-npm install
-npm run build
+vol = hslider("volume [unit:dB]", 0, -96, 0, 0.1) : ba.db2linear : si.smoo;
+freq1 = hslider("freq1 [unit:Hz]", 1000, 20, 3000, 1);
+freq2 = hslider("freq2 [unit:Hz]", 200, 20, 3000, 1);
+
+process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
+-->
+</faust-editor>
+
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.3/dist/faust-web-component.js"></script>
 ```
-
-This will generate `dist/faust-web-component.js`, which you can use with a `<script>` tag as in the above example.
 
 ## Demo
 
@@ -63,4 +85,3 @@ Several steps needs to be done before official release:
 
 - audio input via file (including some stock signals)
 - greater configurability via HTML attributes
-- package publication on npm
