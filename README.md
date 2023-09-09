@@ -53,7 +53,7 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 
 ## NPM package 
 
- A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.3/dist/faust-web-component.js (possibly update the version number).
+ A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.5/dist/faust-web-component.js (possibly update the version number).
  
  Here is an HTML example using this model:
  
