@@ -100,12 +100,14 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 
 ## Demo
 
-A concrete use-case can be seen in the this [updated version](https://ijc8.me/faustdoc/) of the Faust documentation site.
+Concrete use-cases can be seen: 
+
+- in the this [updated version](https://ijc8.me/faustdoc/) of the Faust documentation site.
+- in this [faust-web-widget](https://codepen.io/St-phane-Letz/pen/LYMWybP) and [faust-web-editor](https://codepen.io/St-phane-Letz/pen/YzdZZoK) editable pages.
 
 ## TODO
 
 Possible improvements:
 
 - audio input via file (including some stock signals)
-
 - greater configurability via HTML attributes
