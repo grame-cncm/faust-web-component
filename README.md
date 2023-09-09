@@ -22,6 +22,8 @@ This will generate `dist/faust-web-component.js`, which you can use with a `<scr
 
 ## Example Usage
 
+The editor and widget components can be used with the following HTML syntax:
+
 ```html
 <p><em>Here's an embedded editor!</em></p>
 
@@ -51,9 +53,30 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 <script src="faust-web-component.js"></script>
 ```
 
+### Polyphonic mode
+
+The `declare options "[midi:on][nvoices:n]";` [coding convention](https://faustdoc.grame.fr/manual/midi/#configuring-and-activating-polyphony) can be used in the DSP code to activate MIDI and polyphonic mode, so for instance:
+
+```html
+<faust-widget>
+<!--
+import("stdfaust.lib");
+declare options "[midi:on][nvoices:16]";
+
+process = pm.clarinet_ui_MIDI <: _,_;
+
+effect = dm.freeverb_demo;
+-->
+</faust-widget>
+
+<script src="faust-web-component.js"></script>
+```
+
+to get a polyphonic clarinet instrument with 16 voices and a global reverb effect.
+
 ## NPM package 
 
- A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.5/dist/faust-web-component.js (possibly update the version number).
+ A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.6/dist/faust-web-component.js (possibly update the version number).
  
  Here is an HTML example using this model:
  
@@ -72,7 +95,7 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 -->
 </faust-editor>
 
-<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.5/dist/faust-web-component.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.6/dist/faust-web-component.js"></script>
 ```
 
 ## Demo
@@ -81,7 +104,8 @@ A concrete use-case can be seen in the this [updated version](https://ijc8.me/fa
 
 ## TODO
 
-Several steps needs to be done before official release:
+Possible improvements:
 
 - audio input via file (including some stock signals)
+
 - greater configurability via HTML attributes
