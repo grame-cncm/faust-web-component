@@ -1,9 +1,9 @@
 import { icon } from "@fortawesome/fontawesome-svg-core"
-import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
+import { FaustMonoDspGenerator, FaustPolyDspGenerator, IFaustMonoWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import Split from "split.js"
-import { faustPromise, audioCtx, compiler, svgDiagrams, mono_generator, poly_generator, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices } from "./common"
+import { faustPromise, audioCtx, compiler, svgDiagrams, default_generator, get_mono_generator, get_poly_generator, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices } from "./common"
 import { createEditor, setError, clearError } from "./editor"
 import { Scope } from "./scope"
 import faustSvg from "./faustText.svg"
@@ -279,14 +279,14 @@ export default class FaustEditor extends HTMLElement {
             let generator = null
             try {
                 // Compile Faust code to access JSON metadata
-                await mono_generator.compile(compiler, "main", code, "")
-                const json = mono_generator.getMeta()
+                await default_generator.compile(compiler, "main", code, "")
+                const json = default_generator.getMeta()
                 let { midi, nvoices } = extractMidiAndNvoices(json);
                 gmidi = midi;
                 gnvoices = nvoices;
 
                 // Build the generator
-                generator = nvoices > 0 ? poly_generator : mono_generator;
+                generator = nvoices > 0 ? get_poly_generator() : get_mono_generator();
                 await generator.compile(compiler, "main", code, "");
 
             } catch (e: any) {
@@ -299,9 +299,9 @@ export default class FaustEditor extends HTMLElement {
             // Create an audio node from compiled Faust
             if (node !== undefined) node.disconnect()
             if (gnvoices > 0) {
-                node = (await poly_generator.createNode(audioCtx, gnvoices))!
+                node = (await (generator as FaustPolyDspGenerator).createNode(audioCtx, gnvoices))!
             } else {
-                node = (await mono_generator.createNode(audioCtx))!
+                node = (await (generator as FaustMonoDspGenerator).createNode(audioCtx))!
             }
             if (node.numberOfInputs > 0) {
                 audioInputSelector.disabled = false

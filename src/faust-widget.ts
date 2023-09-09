@@ -1,10 +1,10 @@
 import { icon } from "@fortawesome/fontawesome-svg-core"
 import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import faustSvg from "./faustText.svg"
-import { IFaustMonoWebAudioNode } from "@grame/faustwasm"
+import { FaustMonoDspGenerator, FaustPolyDspGenerator, IFaustMonoWebAudioNode } from "@grame/faustwasm"
 import { IFaustPolyWebAudioNode } from "@grame/faustwasm"
 import { FaustUI } from "@shren/faust-ui"
-import { faustPromise, audioCtx, mono_generator, poly_generator, compiler, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices } from "./common"
+import { faustPromise, audioCtx, get_mono_generator, get_poly_generator, compiler, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices, default_generator } from "./common"
 
 const template = document.createElement("template")
 template.innerHTML = `
@@ -116,18 +116,19 @@ export default class FaustWidget extends HTMLElement {
         let node: IFaustMonoWebAudioNode | IFaustPolyWebAudioNode
         let input: MediaStreamAudioSourceNode | undefined
         let faustUI: FaustUI
+        let generator: FaustMonoDspGenerator | FaustPolyDspGenerator
 
         const setup = async () => {
             await faustPromise
             // Compile Faust code to access JSON metadata
-            await mono_generator.compile(compiler, "main", code, "")
-            const json = mono_generator.getMeta()
+            await default_generator.compile(compiler, "main", code, "")
+            const json = default_generator.getMeta()
             let { midi, nvoices } = extractMidiAndNvoices(json);
             gmidi = midi;
             gnvoices = nvoices;
 
             // Build the generator and generate UI
-            const generator = nvoices > 0 ? poly_generator : mono_generator;
+            generator = nvoices > 0 ? get_poly_generator() : get_mono_generator();
             await generator.compile(compiler, "main", code, "");
             const ui = generator.getUI();
 
@@ -145,9 +146,9 @@ export default class FaustWidget extends HTMLElement {
             // Create an audio node from compiled Faust
             if (node === undefined) {
                 if (gnvoices > 0) {
-                    node = (await poly_generator.createNode(audioCtx, gnvoices))!
+                    node = (await (generator as FaustPolyDspGenerator).createNode(audioCtx, gnvoices))!
                 } else {
-                    node = (await mono_generator.createNode(audioCtx))!
+                    node = (await (generator as FaustMonoDspGenerator).createNode(audioCtx))!
                 }
             }
 

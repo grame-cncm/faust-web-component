@@ -9,5 +9,6 @@ export default defineConfig({
             formats: ["iife"],
             fileName: () => "faust-web-component.js",
         },
+        sourcemap: true,
     },
 })
