@@ -11,8 +11,7 @@ for (const icon of [faPlay, faStop, faUpRightFromSquare, faSquareCaretLeft, faAn
 
 export let compiler: FaustCompiler
 export let svgDiagrams: FaustSvgDiagrams
-export const default_generator = new FaustMonoDspGenerator() // TODO: Support polyphony
-// export const poly_generator = new FaustPolyDspGenerator() // TODO: Support polyphony
+export const default_generator = new FaustMonoDspGenerator()
 export const get_mono_generator = () => new FaustMonoDspGenerator()
 export const get_poly_generator = () => new FaustPolyDspGenerator()
 

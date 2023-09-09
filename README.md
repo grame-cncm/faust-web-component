@@ -72,7 +72,7 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 -->
 </faust-editor>
 
-<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.3/dist/faust-web-component.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.5/dist/faust-web-component.js"></script>
 ```
 
 ## Demo
