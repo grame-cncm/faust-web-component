@@ -1,7 +1,7 @@
 {
     "name": "@grame/faust-web-component",
     "description": "Web component embedding the Faust Compiler",
-    "version": "0.2.9",
+    "version": "0.2.10",
     "module": "dist/faust-web-component.js",
     "files": [
         "src/",
@@ -9,7 +9,8 @@
         "index.html",
         "tsconfig.json",
         "vite.config.js",
-        "dist/faust-web-component.js"
+        "dist/faust-web-component.js",
+        "dist/02-XYLO1.mp3"
     ],
     "type": "module",
     "scripts": {

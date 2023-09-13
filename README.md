@@ -53,6 +53,8 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 <script src="faust-web-component.js"></script>
 ```
 
+When the audio DSP code has inputs, a list of possible audio devices will be displayed and a given device can be selected. The last one is "Audio File" and can be selected to play a default audio file connected to the DSP inputs.
+
 ### Polyphonic mode
 
 The `declare options "[midi:on][nvoices:n]";` [coding convention](https://faustdoc.grame.fr/manual/midi/#configuring-and-activating-polyphony) can be used in the DSP code to activate MIDI and polyphonic mode, so for instance:

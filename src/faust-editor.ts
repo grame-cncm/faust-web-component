@@ -267,7 +267,7 @@ export default class FaustEditor extends HTMLElement {
         let spectrum: Scope | undefined
         let gmidi = false
         let gnvoices = -1
-
+        let sourceNode: AudioBufferSourceNode = undefined;
 
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
@@ -435,6 +435,7 @@ export default class FaustEditor extends HTMLElement {
                     audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId))
                 }
             }
+            audioInputSelector.appendChild(new Option("Audio File", "Audio File"))
         }
         deviceUpdateCallbacks.push(updateInputDevices)
 
@@ -446,8 +447,30 @@ export default class FaustEditor extends HTMLElement {
                 input = undefined
             }
             if (node && node.numberOfInputs > 0) {
-                input = audioCtx.createMediaStreamSource(stream)
-                input.connect(node!)
+                if (deviceId == "Audio File") {
+                    try {
+                        // Load the file
+                        let file = await fetch('02-XYLO1.mp3');
+                        const arrayBuffer = await file.arrayBuffer();
+                        let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                        // Create a source node from the buffer
+                        sourceNode = audioCtx.createBufferSource();
+                        sourceNode.buffer = audioBuffer;
+                        sourceNode.connect(node!);
+                        // Start playing the file
+                        sourceNode.start();
+                    } catch (error) {
+                        console.error("Error loading file: ", error);
+                    }
+                } else {
+                    if (sourceNode !== undefined) {
+                        sourceNode.stop();
+                        sourceNode.disconnect();
+                        sourceNode = undefined;
+                    }
+                    input = audioCtx.createMediaStreamSource(stream);
+                    input.connect(node!);
+                }
             }
         }
 
