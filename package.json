@@ -1,7 +1,7 @@
 {
     "name": "@grame/faust-web-component",
     "description": "Web component embedding the Faust Compiler",
-    "version": "0.2.11",
+    "version": "0.2.12",
     "module": "dist/faust-web-component.js",
     "files": [
         "src/",

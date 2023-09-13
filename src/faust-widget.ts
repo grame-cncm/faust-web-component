@@ -218,8 +218,12 @@ export default class FaustWidget extends HTMLElement {
             if (node && node.numberOfInputs > 0) {
                 if (deviceId == "Audio File") {
                     try {
+                        // Extract the base URL (excluding the script filename)
+                        const scriptTag = document.querySelector('script[src$="faust-web-component.js"]');
+                        const scriptSrc = scriptTag.src;
+                        const baseUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/') + 1);
                         // Load the file
-                        let file = await fetch('./02-XYLO1.mp3');
+                        let file = await fetch(baseUrl + '02-XYLO1.mp3');
                         const arrayBuffer = await file.arrayBuffer();
                         let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
                         // Create a source node from the buffer
