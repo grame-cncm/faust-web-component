@@ -450,7 +450,7 @@ export default class FaustEditor extends HTMLElement {
                 if (deviceId == "Audio File") {
                     try {
                         // Load the file
-                        let file = await fetch('02-XYLO1.mp3');
+                        let file = await fetch('./02-XYLO1.mp3');
                         const arrayBuffer = await file.arrayBuffer();
                         let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
                         // Create a source node from the buffer
