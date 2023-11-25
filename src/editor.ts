@@ -32,7 +32,7 @@ const faustLanguage = StreamLanguage.define(clike({
     }
 }))
 
-export function createEditor(parent: HTMLElement, doc: string) {
+export function createEditor(parent: HTMLElement, doc: string, editable: boolean = true) {
     return new EditorView({
         parent,
         doc,
@@ -63,6 +63,7 @@ export function createEditor(parent: HTMLElement, doc: string) {
                 ...lintKeymap
             ]),
             faustLanguage,
+            EditorView.editable.of(editable)
         ],
     })
 }
