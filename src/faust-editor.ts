@@ -370,8 +370,12 @@ export default class FaustEditor extends HTMLElement {
             // Create SVG block diagram
             setSVG(svgDiagrams.from("main", code, "")["process.svg"])
 
-            // Set editor size to fit UI size
-            editorEl.style.height = `${Math.max(125, faustUI.minHeight)}px`;
+            // Set editor size to fit UI size or use custom value in attribute
+            if (this.minHeight != null) {
+                editorEl.style.height = this.minHeight;
+            } else {
+                editorEl.style.height = `${Math.max(125, faustUI.minHeight)}px`;
+            }
             faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
         }
