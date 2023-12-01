@@ -8,8 +8,9 @@ import { createEditor, setError, clearError } from "./editor"
 import { Scope } from "./scope"
 import faustSvg from "./faustText.svg"
 
-function editorTemplate(passive: boolean = false) {
+function editorTemplate(passive: boolean = false, minHeight: string = "") {
     const hidden = passive ? "hidden" : ""
+    const editorMinHeight = minHeight != "" ? `min-height: ${minHeight};` : ""
     const template = document.createElement("template")
     template.innerHTML = `
     <div id="root">
@@ -49,6 +50,7 @@ function editorTemplate(passive: boolean = false) {
     </div>
     <style>
         #root {
+            overflow:hidden
             border: 1px solid black;
             border-radius: 5px;
             box-sizing: border-box;
@@ -97,6 +99,7 @@ function editorTemplate(passive: boolean = false) {
 
         #editor .cm-editor {
             height: 100%;
+            ${minHeight != "" ? `min-height: ${minHeight};` : ""}
         }
 
         .cm-diagnostic {
@@ -223,10 +226,16 @@ export default class FaustEditor extends HTMLElement {
     }
     
     passive = false
+    minHeight = null
+    editor = null
+    
+    getCodeString() {
+        return this.editor.state.doc.toString()
+    }
 
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.passive).content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.passive, this.minHeight).content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
         ideLink.onfocus = () => {
@@ -499,16 +508,21 @@ export default class FaustEditor extends HTMLElement {
         if (this.passive) {
             sidebar.remove()
         }
+        
+        this.editor = editor
     }
     
     attributeChangedCallback(name, oldValue, newValue) {
       if ((name ==  "passive") && (newValue != null)) {
           this.passive = true
       }
+      if ((name ==  "min-height") && (newValue != "")) {
+          this.minHeight = newValue
+      }
     }
     
     static get observedAttributes() {
-      return ["passive"];
+      return ["passive", "min-height"];
     }
 
 }

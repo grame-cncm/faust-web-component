@@ -1,6 +1,11 @@
 # faust-web-component
 
-> :warning: This is a fork!
+> :warning: This is a fork !  
+>
+> Features in fork: passive boolean attribute for read-only editor  
+> and min-height for setting a minimum height as CSS prop to the editor element  
+> Additional variant \<faust-editor-basic\> without buttons for dynamic editor  
+> Aims to bring a lightweight variant, see usecase in [my other project](https://github.com/Simon-L/pasfa)
 
 This package provides two [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) for embedding interactive [Faust](https://faust.grame.fr) snippets in web pages.
 
