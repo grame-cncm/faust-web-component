@@ -50,7 +50,7 @@ function editorTemplate(passive: boolean = false, minHeight: string = "") {
     </div>
     <style>
         #root {
-            overflow:hidden
+            overflow:hidden;
             border: 1px solid black;
             border-radius: 5px;
             box-sizing: border-box;
