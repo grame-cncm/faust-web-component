@@ -3,8 +3,7 @@ import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import { createEditor, setError, clearError } from "./editor"
 import faustSvg from "./faustText.svg"
 
-function editorTemplate(passive: boolean = false, minHeight: string = "") {
-    const hidden = passive ? "hidden" : ""
+function editorTemplate(readonly: boolean = false, minHeight: string = "") {
     const editorMinHeight = minHeight != "" ? `min-height: ${minHeight};` : ""
     const template = document.createElement("template")
     template.innerHTML = `
@@ -111,7 +110,7 @@ export default class FaustEditorBasic extends HTMLElement {
         super()
     }
     
-    passive = false
+    readonly = false
     minHeight = null
     editor = null
     
@@ -128,7 +127,7 @@ export default class FaustEditorBasic extends HTMLElement {
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
         console.log("connectedCallback: Got %s for min-height", this.minHeight);
-        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.passive, this.minHeight).content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.readonly, this.minHeight).content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
         ideLink.onfocus = () => {
@@ -139,7 +138,7 @@ export default class FaustEditorBasic extends HTMLElement {
         }
 
         const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = createEditor(editorEl, code, !this.passive)
+        const editor = createEditor(editorEl, code, !this.readonly)
 
         const copyButton = this.shadowRoot!.querySelector("#copy") as HTMLButtonElement
         
@@ -155,18 +154,16 @@ export default class FaustEditorBasic extends HTMLElement {
     }
     
     attributeChangedCallback(name, oldValue, newValue) {
-      if ((name ==  "passive") && (newValue != null)) {
-          this.passive = true
+      if ((name ==  "readonly") && (newValue != null)) {
+          this.readonly = true
       }
       if ((name ==  "min-height") && (newValue != "")) {
           this.minHeight = newValue
-          console.log("Got %s for min-height", newValue);
-          
       }
     }
     
     static get observedAttributes() {
-      return ["passive", "min-height"];
+      return ["readonly", "min-height"];
     }
 
 }

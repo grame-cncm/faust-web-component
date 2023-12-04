@@ -2,16 +2,17 @@
 
 > :warning: This is a fork !  
 >
-> Features in fork: passive boolean attribute for read-only editor  
-> and min-height for setting a minimum height as CSS prop to the editor element  
+> Features in fork: `readonly` boolean attribute for read-only editor  
+> and `min-height` for setting a minimum height as CSS prop to the editor element  
 > Additional variant \<faust-editor-basic\> without buttons for dynamic editor  
-> Aims to bring a lightweight variant, see usecase in [my other project](https://github.com/Simon-L/pasfa)
+> Aims to bring a lightweight variant, see [the demo](https://synthe.tiseur.fr/faust-web-component/#readonlyandbasic) or an usecase in [my other project](https://github.com/Simon-L/pasfa)
 
 This package provides two [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) for embedding interactive [Faust](https://faust.grame.fr) snippets in web pages.
 
 - `<faust-editor>` displays an editor (using [CodeMirror 6](https://codemirror.net/)) with executable, editable Faust code, along with some bells & whistles (controls, block diagram, plots) in a side pane.
 This component is ideal for demonstrating some code in Faust and allowing the reader to try it out and tweak it themselves without having to leave the page. (For more extensive work, it also includes a button to open the code in the Faust IDE.)
-    * `passive` attributes disables playback and makes editor read-only
+    * `readonly` : attribute disables playback and makes editor read-only.
+    * `min-height` : attribute to set the min-height CSS property, the value must be valid CSS value eg. "42px", "1.5em".
 
 - `<faust-widget>` just shows the controls and does not allow editing, so it serves simply as a way to embed interactive DSP.
 

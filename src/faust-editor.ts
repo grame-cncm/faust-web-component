@@ -8,18 +8,17 @@ import { createEditor, setError, clearError } from "./editor"
 import { Scope } from "./scope"
 import faustSvg from "./faustText.svg"
 
-function editorTemplate(passive: boolean = false, minHeight: string = "") {
-    const hidden = passive ? "hidden" : ""
+function editorTemplate(readonly: boolean = false, minHeight: string = "") {
     const editorMinHeight = minHeight != "" ? `min-height: ${minHeight};` : ""
     const template = document.createElement("template")
     template.innerHTML = `
     <div id="root">
         <div id="controls">
-            <button title="Run" class="button" id="run" disabled ${hidden}>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
-            <button title="Stop" class="button" id="stop" disabled ${hidden}>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
+            <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
+            <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
             <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
             <button title="Copy" class="button" id="copy">${icon({ prefix: "fas", iconName: "copy" }).html[0]}</button>
-            <select id="audio-input" class="dropdown" disabled ${hidden}>
+            <select id="audio-input" class="dropdown" disabled>
                 <option>Audio input</option>
             </select>
             <!-- TODO: MIDI input
@@ -225,7 +224,7 @@ export default class FaustEditor extends HTMLElement {
         super()
     }
     
-    passive = false
+    readonly = false
     minHeight = null
     editor = null
     
@@ -235,7 +234,7 @@ export default class FaustEditor extends HTMLElement {
 
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.passive, this.minHeight).content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.readonly, this.minHeight).content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
         ideLink.onfocus = () => {
@@ -246,7 +245,7 @@ export default class FaustEditor extends HTMLElement {
         }
 
         const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = createEditor(editorEl, code, !this.passive)
+        const editor = createEditor(editorEl, code, !this.readonly)
 
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
@@ -261,7 +260,7 @@ export default class FaustEditor extends HTMLElement {
         const split = Split([editorEl, sidebar], {
             sizes: [100, 0],
             minSize: [0, 20],
-            gutterSize: this.passive ? 0 : 7,
+            gutterSize: 7,
             snapOffset: 150,
             onDragEnd: () => { scope?.onResize(); spectrum?.onResize() },
         })
@@ -509,16 +508,12 @@ export default class FaustEditor extends HTMLElement {
 
         audioInputSelector.onchange = connectInput
         
-        if (this.passive) {
-            sidebar.remove()
-        }
-        
         this.editor = editor
     }
     
     attributeChangedCallback(name, oldValue, newValue) {
-      if ((name ==  "passive") && (newValue != null)) {
-          this.passive = true
+      if ((name ==  "readonly") && (newValue != null)) {
+          this.readonly = true
       }
       if ((name ==  "min-height") && (newValue != "")) {
           this.minHeight = newValue
@@ -526,7 +521,7 @@ export default class FaustEditor extends HTMLElement {
     }
     
     static get observedAttributes() {
-      return ["passive", "min-height"];
+      return ["readonly", "min-height"];
     }
 
 }
