@@ -10,12 +10,13 @@
         "tsconfig.json",
         "vite.config.js",
         "dist/faust-web-component.js",
+        "dist/faust-web-component-basic.js",
         "dist/02-XYLO1.mp3"
     ],
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "vite build && vite build --mode basic",
         "preview": "vite preview"
     },
     "repository": {
