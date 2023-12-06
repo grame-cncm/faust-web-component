@@ -7,7 +7,7 @@
 > Additional variant \<faust-editor-basic\> without buttons for dynamic editor  
 > Aims to bring a lightweight variant, see [the demo](https://synthe.tiseur.fr/faust-web-component/#readonlyandbasic)  
 > or an usecase in [my other project](https://github.com/Simon-L/pasfa)  
-> Build the basic variant only using: `FAUST_WEB_BASIC=true npm run build`. Much smaller size but obviously doesn't allow compiling DSP.  
+> `dist/faust-web-component-basic.js` contains only the basic variant, it's much smaller in size but obviously doesn't allow compiling DSP.  
 
 This package provides two [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) for embedding interactive [Faust](https://faust.grame.fr) snippets in web pages.
 
