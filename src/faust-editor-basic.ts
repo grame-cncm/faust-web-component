@@ -6,11 +6,16 @@ import faustSvg from "./faustText.svg"
 function editorTemplate(minHeight: string = "") {
     const editorMinHeight = minHeight != "" ? `min-height: ${minHeight};` : ""
     const template = document.createElement("template")
+    let copyButton = `<button title="Copy" class="button" id="copy">${icon({ prefix: "fas", iconName: "copy" }).html[0]}</button>`
+    if (!navigator.clipboard) {
+        console.log("Unable to use clipboard")
+        copyButton = ""
+    }
     template.innerHTML = `
     <div id="root">
         <div id="controls">
             <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
-            <button title="Copy" class="button" id="copy">${icon({ prefix: "fas", iconName: "copy" }).html[0]}</button>
+            ${copyButton}
             <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
         </div>
         <div id="content">
@@ -141,11 +146,9 @@ export default class FaustEditorBasic extends HTMLElement {
 
         const copyButton = this.shadowRoot!.querySelector("#copy") as HTMLButtonElement
         
-        copyButton.onclick = () => {
-            if (navigator.clipboard) {
+        if (copyButton !== null) {
+            copyButton.onclick = () => {
                 navigator.clipboard.writeText(editor.state.doc.toString())
-            } else {
-                console.log("Unable to use clipboard")
             }
         }
         

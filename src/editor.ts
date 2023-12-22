@@ -63,7 +63,7 @@ export function createEditor(parent: HTMLElement, doc: string, editable: boolean
                 ...lintKeymap
             ]),
             faustLanguage,
-            EditorView.editable.of(editable)
+            EditorState.readOnly.of(!editable)
         ],
     })
 }

@@ -8,16 +8,21 @@ import { createEditor, setError, clearError } from "./editor"
 import { Scope } from "./scope"
 import faustSvg from "./faustText.svg"
 
-function editorTemplate(readonly: boolean = false, minHeight: string = "") {
+function editorTemplate(minHeight: string = "") {
     const editorMinHeight = minHeight != "" ? `min-height: ${minHeight};` : ""
     const template = document.createElement("template")
+    let copyButton = `<button title="Copy" class="button" id="copy">${icon({ prefix: "fas", iconName: "copy" }).html[0]}</button>`
+    if (!navigator.clipboard) {
+        console.log("Unable to use clipboard")
+        copyButton = ""
+    }
     template.innerHTML = `
     <div id="root">
         <div id="controls">
             <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
             <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
             <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
-            <button title="Copy" class="button" id="copy">${icon({ prefix: "fas", iconName: "copy" }).html[0]}</button>
+            ${copyButton}
             <select id="audio-input" class="dropdown" disabled>
                 <option>Audio input</option>
             </select>
@@ -234,7 +239,7 @@ export default class FaustEditor extends HTMLElement {
 
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.readonly, this.minHeight).content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.minHeight).content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
         ideLink.onfocus = () => {
@@ -435,11 +440,9 @@ export default class FaustEditor extends HTMLElement {
             tabButton.onclick = () => openTab(i)
         }
         
-        copyButton.onclick = () => {
-            if (navigator.clipboard) {
+        if (copyButton !== null) {
+            copyButton.onclick = () => {
                 navigator.clipboard.writeText(editor.state.doc.toString())
-            } else {
-                console.log("Unable to use clipboard")
             }
         }
         
