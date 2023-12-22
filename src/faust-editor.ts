@@ -250,7 +250,7 @@ export default class FaustEditor extends HTMLElement {
         }
 
         const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = createEditor(editorEl, code, !this.readonly)
+        const editor = createEditor(editorEl, code, this.readonly)
 
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement

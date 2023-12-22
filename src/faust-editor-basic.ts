@@ -142,7 +142,7 @@ export default class FaustEditorBasic extends HTMLElement {
         }
 
         const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = createEditor(editorEl, code, !this.readonly)
+        const editor = createEditor(editorEl, code, this.readonly)
 
         const copyButton = this.shadowRoot!.querySelector("#copy") as HTMLButtonElement
         
