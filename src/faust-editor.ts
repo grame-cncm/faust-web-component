@@ -512,10 +512,10 @@ export default class FaustEditor extends HTMLElement {
     }
     
     attributeChangedCallback(name, oldValue, newValue) {
-      if ((name ==  "readonly") && (newValue != null)) {
+      if ((name ===  "readonly") && (newValue !== null)) {
           this.readonly = true
       }
-      if ((name ==  "min-height") && (newValue != "")) {
+      if ((name ===  "min-height") && (newValue !== "")) {
           this.minHeight = newValue
       }
     }

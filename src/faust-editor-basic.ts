@@ -3,7 +3,7 @@ import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
 import { createEditor, setError, clearError } from "./editor"
 import faustSvg from "./faustText.svg"
 
-function editorTemplate(readonly: boolean = false, minHeight: string = "") {
+function editorTemplate(minHeight: string = "") {
     const editorMinHeight = minHeight != "" ? `min-height: ${minHeight};` : ""
     const template = document.createElement("template")
     template.innerHTML = `
@@ -126,8 +126,7 @@ export default class FaustEditorBasic extends HTMLElement {
 
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        console.log("connectedCallback: Got %s for min-height", this.minHeight);
-        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.readonly, this.minHeight).content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.minHeight).content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
         ideLink.onfocus = () => {
@@ -154,10 +153,10 @@ export default class FaustEditorBasic extends HTMLElement {
     }
     
     attributeChangedCallback(name, oldValue, newValue) {
-      if ((name ==  "readonly") && (newValue != null)) {
+      if ((name ===  "readonly") && (newValue !== null)) {
           this.readonly = true
       }
-      if ((name ==  "min-height") && (newValue != "")) {
+      if ((name ===  "min-height") && (newValue !== "")) {
           this.minHeight = newValue
       }
     }
