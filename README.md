@@ -78,7 +78,7 @@ to get a polyphonic clarinet instrument with 16 voices and a global reverb effec
 
 ## NPM package 
 
- A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.28/dist/faust-web-component.js (possibly update the version number).
+ A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.29/dist/faust-web-component.js (possibly update the version number).
  
  Here is an HTML example using this model:
  
@@ -97,14 +97,14 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 -->
 </faust-editor>
 
-<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.28/dist/faust-web-component.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.2.29/dist/faust-web-component.js"></script>
 ```
 
 ## Demo
 
 Concrete use-cases can be seen: 
 
-- in the this [updated version](https://ijc8.me/faustdoc/) of the Faust documentation site.
+- in this [updated version](https://ijc8.me/faustdoc/) of the Faust documentation site.
 - in this [faust-web-widget](https://codepen.io/St-phane-Letz/pen/LYMWybP) and [faust-web-editor](https://codepen.io/St-phane-Letz/pen/YzdZZoK) editable pages.
 
 ## TODO
