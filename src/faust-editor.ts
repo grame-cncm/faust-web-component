@@ -8,218 +8,238 @@ import { createEditor, setError, clearError } from "./editor"
 import { Scope } from "./scope"
 import faustSvg from "./faustText.svg"
 
-const template = document.createElement("template")
-template.innerHTML = `
-<div id="root">
-    <div id="controls">
-        <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
-        <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
-        <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
-        <select id="audio-input" class="dropdown" disabled>
-            <option>Audio input</option>
-        </select>
-        <!-- TODO: MIDI input
-        <select id="midi-input" class="dropdown" disabled>
-            <option>MIDI input</option>
-        </select>
-        -->
-        <!-- TODO: volume control? <input id="volume" type="range" min="0" max="100"> -->
-        <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
-    </div>
-    <div id="content">
-        <div id="editor"></div>
-        <div id="sidebar">
-            <div id="sidebar-buttons">
-                <button title="Controls" id="tab-ui" class="button tab" disabled>${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
-                <button title="Block Diagram" id="tab-diagram" class="button tab" disabled>${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
-                <button title="Scope" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
-                <button title="Spectrum" id="tab-spectrum" class="button tab" disabled>${icon({ prefix: "fas", iconName: "chart-line" }).html[0]}</button>
-            </div>
-            <div id="sidebar-content">
-                <div id="faust-ui"></div>
-                <div id="faust-diagram"></div>
-                <div id="faust-scope"></div>
-                <div id="faust-spectrum"></div>
+function editorTemplate(minHeight: string = "") {
+    const editorMinHeight = minHeight != "" ? `min-height: ${minHeight};` : ""
+    const template = document.createElement("template")
+    let copyButton = `<button title="Copy" class="button" id="copy">${icon({ prefix: "fas", iconName: "copy" }).html[0]}</button>`
+    if (!navigator.clipboard) {
+        console.log("Unable to use clipboard")
+        copyButton = ""
+    }
+    template.innerHTML = `
+    <div id="root">
+        <div id="controls">
+            <button title="Run" class="button" id="run" disabled>${icon({ prefix: "fas", iconName: "play" }).html[0]}</button>
+            <button title="Stop" class="button" id="stop" disabled>${icon({ prefix: "fas", iconName: "stop" }).html[0]}</button>
+            <a title="Open in Faust IDE" id="ide" href="https://faustide.grame.fr/" class="button" target="_blank">${icon({ prefix: "fas", iconName: "up-right-from-square" }).html[0]}</a>
+            ${copyButton}
+            <select id="audio-input" class="dropdown" disabled>
+                <option>Audio input</option>
+            </select>
+            <!-- TODO: MIDI input
+            <select id="midi-input" class="dropdown" disabled>
+                <option>MIDI input</option>
+            </select>
+            -->
+            <!-- TODO: volume control? <input id="volume" type="range" min="0" max="100"> -->
+            <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
+        </div>
+        <div id="content">
+            <div id="editor"></div>
+            <div id="sidebar">
+                <div id="sidebar-buttons">
+                    <button title="Controls" id="tab-ui" class="button tab" disabled>${icon({ prefix: "fas", iconName: "sliders" }).html[0]}</button>
+                    <button title="Block Diagram" id="tab-diagram" class="button tab" disabled>${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
+                    <button title="Scope" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
+                    <button title="Spectrum" id="tab-spectrum" class="button tab" disabled>${icon({ prefix: "fas", iconName: "chart-line" }).html[0]}</button>
+                </div>
+                <div id="sidebar-content" >
+                    <div id="faust-ui"></div>
+                    <div id="faust-diagram"></div>
+                    <div id="faust-scope"></div>
+                    <div id="faust-spectrum"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<style>
-    #root {
-        border: 1px solid black;
-        border-radius: 5px;
-        box-sizing: border-box;
-    }
+    <style>
+        #root {
+            overflow:hidden;
+            border: 1px solid black;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
 
-    *, *:before, *:after {
-        box-sizing: inherit; 
-    }
+        *, *:before, *:after {
+            box-sizing: inherit; 
+        }
 
-    #controls {
-        background-color: #384d64;
-        border-bottom: 1px solid black;
-        display: flex;
-    }
+        #controls {
+            background-color: #384d64;
+            border-bottom: 1px solid black;
+            display: flex;
+        }
 
-    #faust {
-        margin-left: auto;
-        margin-right: 10px;
-        display: flex;
-        align-items: center;
-    }
+        #faust {
+            margin-left: auto;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+        }
 
-    #faust-ui {
-        width: 232px;
-        max-height: 150px;
-    }
+        #faust-ui {
+            width: 232px;
+            max-height: 150px;
+        }
 
-    #faust-scope, #faust-spectrum {
-        min-width: 232px;
-        min-height: 150px;
-    }
+        #faust-scope, #faust-spectrum {
+            min-width: 232px;
+            min-height: 150px;
+        }
 
-    #faust-diagram {
-        max-width: 232px;
-        height: 150px;
-    }
+        #faust-diagram {
+            max-width: 232px;
+            height: 150px;
+        }
 
-    #content {
-        display: flex;
-    }
+        #content {
+            display: flex;
+        }
 
-    #editor {
-        flex-grow: 1;
-        overflow-y: auto;
-    }
+        #editor {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
 
-    #editor .cm-editor {
-        height: 100%;
-    }
+        #editor .cm-editor {
+            height: 100%;
+            ${minHeight != "" ? `min-height: ${minHeight};` : ""}
+        }
 
-    .cm-diagnostic {
-        font-family: monospace;
-    }
+        .cm-diagnostic {
+            font-family: monospace;
+        }
 
-    .cm-diagnostic-error {
-        background-color: #fdf2f5 !important;
-        color: #a4000f !important;
-        border-color: #a4000f !important;
-    }
+        .cm-diagnostic-error {
+            background-color: #fdf2f5 !important;
+            color: #a4000f !important;
+            border-color: #a4000f !important;
+        }
 
-    #sidebar {
-        display: flex;
-        max-width: 100%;
-    }
+        #sidebar {
+            display: flex;
+            max-width: 100%;
+        }
 
-    .tab {
-        flex-grow: 1;
-    }
+        .tab {
+            flex-grow: 1;
+        }
 
-    #sidebar-buttons .tab.active {
-        background-color: #bbb;
-    }
+        #sidebar-buttons .tab.active {
+            background-color: #bbb;
+        }
 
-    #sidebar-buttons {
-        background-color: #f5f5f5;
-        display: flex;
-        flex-direction: column;
-    }
+        #sidebar-buttons {
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+        }
 
-    #sidebar-buttons .button {
-        background-color: #f5f5f5;
-        color: #000;
-        width: 20px;
-        height: 20px;
-        padding: 4px;
-    }
+        #sidebar-buttons .button {
+            background-color: #f5f5f5;
+            color: #000;
+            width: 20px;
+            height: 20px;
+            padding: 4px;
+        }
 
-    #sidebar-buttons .button:hover {
-        background-color: #ddd;
-    }
+        #sidebar-buttons .button:hover {
+            background-color: #ddd;
+        }
 
-    #sidebar-buttons .button:active {
-        background-color: #aaa;
-    }
+        #sidebar-buttons .button:active {
+            background-color: #aaa;
+        }
 
-    #sidebar-content {
-        background-color: #fff;
-        border-left: 1px solid #ccc;
-        overflow: auto;
-        flex-grow: 1;
-        max-height: 100%;
-    }
+        #sidebar-content {
+            background-color: #fff;
+            border-left: 1px solid #ccc;
+            overflow: auto;
+            flex-grow: 1;
+            max-height: 100%;
+        }
 
-    #sidebar-content > div {
-        display: none;
-    }
+        #sidebar-content > div {
+            display: none;
+        }
 
-    #sidebar-content > div.active {
-        display: block;
-    }
+        #sidebar-content > div.active {
+            display: block;
+        }
 
-    a.button {
-        appearance: button;
-    }
+        a.button {
+            appearance: button;
+        }
 
-    .button {
-        background-color: #384d64;
-        border: 0;
-        padding: 5px;
-        width: 25px;
-        height: 25px;
-        color: #fff;
-    }
+        .button {
+            background-color: #384d64;
+            border: 0;
+            padding: 5px;
+            width: 25px;
+            height: 25px;
+            color: #fff;
+        }
 
-    .button:hover {
-        background-color: #4b71a1;
-    }
+        .button:hover {
+            background-color: #4b71a1;
+        }
 
-    .button:active {
-        background-color: #373736;
-    }
+        .button:active {
+            background-color: #373736;
+        }
 
-    .button:disabled {
-        opacity: 0.65;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
+        .button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
 
-    #controls > .button > svg {
-        width: 15px;
-        height: 15px;
-        vertical-align: top;
-    }
+        #controls > .button > svg {
+            width: 15px;
+            height: 15px;
+            vertical-align: top;
+        }
 
-    .dropdown {
-        height: 19px;
-        margin: 3px 0 3px 10px;
-        border: 0;
-        background: #fff;
-    }
+        .dropdown {
+            height: 19px;
+            margin: 3px 0 3px 10px;
+            border: 0;
+            background: #fff;
+        }
 
-    .gutter {
-        background-color: #f5f5f5;
-        background-repeat: no-repeat;
-        background-position: 50%;
-    }
-    
-    .gutter.gutter-horizontal {
-        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
-        cursor: col-resize;
-    }
+        .gutter {
+            background-color: #f5f5f5;
+            background-repeat: no-repeat;
+            background-position: 50%;
+        }
+        
+        .gutter.gutter-horizontal {
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+            cursor: col-resize;
+        }
 
-    ${faustCSS}
-</style>
-`
+        ${faustCSS}
+    </style>
+    `
+    return template
+}
 
 export default class FaustEditor extends HTMLElement {
     constructor() {
         super()
     }
+    
+    readonly = false
+    minHeight = null
+    editor = null
+    
+    getCodeString() {
+        return this.editor.state.doc.toString()
+    }
 
     connectedCallback() {
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true))
+        this.attachShadow({ mode: "open" }).appendChild(editorTemplate(this.minHeight).content.cloneNode(true))
 
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
         ideLink.onfocus = () => {
@@ -230,10 +250,11 @@ export default class FaustEditor extends HTMLElement {
         }
 
         const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = createEditor(editorEl, code)
+        const editor = createEditor(editorEl, code, this.readonly)
 
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
+        const copyButton = this.shadowRoot!.querySelector("#copy") as HTMLButtonElement
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
         const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement
         const sidebar = this.shadowRoot!.querySelector("#sidebar") as HTMLDivElement
@@ -353,8 +374,12 @@ export default class FaustEditor extends HTMLElement {
             // Create SVG block diagram
             setSVG(svgDiagrams.from("main", code, "")["process.svg"])
 
-            // Set editor size to fit UI size
-            editorEl.style.height = `${Math.max(125, faustUI.minHeight)}px`;
+            // Set editor size to fit UI size or use custom value in attribute
+            if (this.minHeight != null) {
+                editorEl.style.height = this.minHeight;
+            } else {
+                editorEl.style.height = `${Math.max(125, faustUI.minHeight)}px`;
+            }
             faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
         }
@@ -414,7 +439,13 @@ export default class FaustEditor extends HTMLElement {
         for (const [i, tabButton] of tabButtons.entries()) {
             tabButton.onclick = () => openTab(i)
         }
-
+        
+        if (copyButton !== null) {
+            copyButton.onclick = () => {
+                navigator.clipboard.writeText(editor.state.doc.toString())
+            }
+        }
+        
         stopButton.onclick = () => {
             if (node !== undefined) {
                 node.disconnect()
@@ -479,5 +510,21 @@ export default class FaustEditor extends HTMLElement {
         }
 
         audioInputSelector.onchange = connectInput
+        
+        this.editor = editor
     }
+    
+    attributeChangedCallback(name, oldValue, newValue) {
+      if ((name ===  "readonly") && (newValue !== null)) {
+          this.readonly = true
+      }
+      if ((name ===  "min-height") && (newValue !== "")) {
+          this.minHeight = newValue
+      }
+    }
+    
+    static get observedAttributes() {
+      return ["readonly", "min-height"];
+    }
+
 }

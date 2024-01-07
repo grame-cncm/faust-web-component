@@ -15,6 +15,7 @@
     </head>
     <body>
         <div id="content">
+            <a href="#readonlyandbasic">Readonly and basic editor examples</a>
             <p>Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
             <faust-editor>
 import("stdfaust.lib");
@@ -53,6 +54,46 @@ process =
     dm.zita_light; // stereo reverb
                 -->
             </faust-editor>
+            <a id="readonlyandbasic"></a>
+            <p>Read-only editor</p>
+            <faust-editor readonly>
+                <!--
+// This editor is readonly
+import("stdfaust.lib");
+process = 
+    dm.cubicnl_demo : // distortion 
+    dm.wah4_demo <: // wah pedal
+    dm.phaser2_demo : // stereo phaser 
+    dm.compressor_demo : // stereo compressor
+    dm.zita_light; // stereo reverb
+                -->
+            </faust-editor>
+            <p>Basic editor without playback</p>
+            <faust-editor-basic>
+                <!--
+// This editor is "basic", it doesn't offer playback
+import("stdfaust.lib");
+process = 
+    dm.cubicnl_demo : // distortion 
+    dm.wah4_demo <: // wah pedal
+    dm.phaser2_demo : // stereo phaser 
+    dm.compressor_demo : // stereo compressor
+    dm.zita_light; // stereo reverb
+                -->
+            </faust-editor-basic>
+            <p>Read-only basic editor without playback</p>
+            <faust-editor-basic readonly>
+                <!--
+// This editor is "basic", it doesn't offer playback
+import("stdfaust.lib");
+process = 
+    dm.cubicnl_demo : // distortion 
+    dm.wah4_demo <: // wah pedal
+    dm.phaser2_demo : // stereo phaser 
+    dm.compressor_demo : // stereo compressor
+    dm.zita_light; // stereo reverb
+                -->
+            </faust-editor-basic>
             <p>Minus, ducimus consequuntur? Corrupti animi aut magni nihil, dolor eos tenetur, autem deserunt et iure culpa, suscipit minus quia velit laudantium asperiores.</p>
             <faust-widget>
 <!--
