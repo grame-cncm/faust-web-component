@@ -36,13 +36,13 @@
     "homepage": "https://github.com/grame-cncm/faust-web-component#readme",
     "devDependencies": {
         "typescript": "^5.0.2",
-        "vite": "^4.4.5"
+        "vite": ">=4.5.2"
     },
     "dependencies": {
         "@codemirror/legacy-modes": "^6.3.3",
         "@fortawesome/fontawesome-svg-core": "^6.4.2",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
-        "@grame/faustwasm": "^0.0.52",
+        "@grame/faustwasm": "^0.0.53",
         "@shren/faust-ui": "^1.1.5",
         "codemirror": "^6.0.1",
         "split.js": "^1.6.5"
