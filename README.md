@@ -104,7 +104,7 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 
 Concrete use-cases can be seen: 
 
-- in this [updated version](https://ijc8.me/faustdoc/) of the Faust documentation site.
+- in the of the [Faust documentation site](https://faustdoc.grame.fr).
 - in this [faust-web-widget](https://codepen.io/St-phane-Letz/pen/LYMWybP) and [faust-web-editor](https://codepen.io/St-phane-Letz/pen/YzdZZoK) editable pages.
 
 ## TODO
