@@ -1,7 +1,7 @@
 {
     "name": "@grame/faust-web-component",
     "description": "Web component embedding the Faust Compiler",
-    "version": "0.2.30",
+    "version": "0.2.31",
     "module": "dist/faust-web-component.js",
     "files": [
         "src/",
@@ -42,7 +42,7 @@
         "@codemirror/legacy-modes": "^6.3.3",
         "@fortawesome/fontawesome-svg-core": "^6.4.2",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
-        "@grame/faustwasm": "^0.0.53",
+        "@grame/faustwasm": "^0.0.54",
         "@shren/faust-ui": "^1.1.5",
         "codemirror": "^6.0.1",
         "split.js": "^1.6.5"
