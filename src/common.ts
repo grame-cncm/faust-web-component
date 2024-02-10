@@ -24,7 +24,8 @@ async function loadFaust() {
 }
 
 export const faustPromise = loadFaust()
-export const audioCtx = new AudioContext()
+export const audioCtx = new AudioContext({ latencyHint: 0.00001 })
+audioCtx.destination.channelInterpretation = "discrete";
 
 export const deviceUpdateCallbacks: ((d: MediaDeviceInfo[]) => void)[] = []
 let devices: MediaDeviceInfo[] = []
