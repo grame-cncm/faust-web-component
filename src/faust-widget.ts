@@ -130,7 +130,7 @@ export default class FaustWidget extends HTMLElement {
 
             // Build the generator and generate UI
             generator = nvoices > 0 ? get_poly_generator() : get_mono_generator();
-            await generator.compile(compiler, "main", code, "");
+            await generator.compile(compiler, "main", code, "-ftz 2");
             const ui = generator.getUI();
 
             faustUI = new FaustUI({ ui, root: faustUIRoot });

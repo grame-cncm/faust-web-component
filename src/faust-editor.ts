@@ -287,7 +287,7 @@ export default class FaustEditor extends HTMLElement {
 
                 // Build the generator
                 generator = nvoices > 0 ? get_poly_generator() : get_mono_generator();
-                await generator.compile(compiler, "main", code, "");
+                await generator.compile(compiler, "main", code, "-ftz 2");
 
             } catch (e: any) {
                 setError(editor, e)
