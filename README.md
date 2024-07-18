@@ -76,6 +76,10 @@ effect = dm.freeverb_demo;
 
 to get a polyphonic clarinet instrument with 16 voices and a global reverb effect.
 
+### HTML example page
+
+The HTML [index.html](./index.html) example page can be copied and tested in `dist` folder.
+
 ## NPM package 
 
  A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.3.7/dist/faust-web-component.js (possibly update the version number).

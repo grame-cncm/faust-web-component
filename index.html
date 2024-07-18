@@ -1,68 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Vite + TS</title>
-        <script type="module" src="/src/main.ts"></script>
-        <style>
-            #content {
-                width: 50%;
-                margin: auto;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="content">
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
-            <faust-editor>
-import("stdfaust.lib");
-process = no.noise;
-            </faust-editor>
-            <p>Nostrum, id deserunt inventore ut veritatis iusto autem soluta officia debitis omnis, dolor sint cum, illo quam dignissimos fuga quod optio nesciunt.</p>
-<!-- Need to comment below example due to occurrence of `<`. -->
-            <faust-editor>
-<!--
-import("stdfaust.lib");
-ctFreq = 500;
-q = 5;
-gain = 1;
-process = no.noise : _ <: fi.resonlp(ctFreq,q,gain),fi.resonlp(ctFreq,q,gain);
--->
-            </faust-editor>
-            <p>Ex velit voluptates, laudantium laboriosam est quis veniam temporibus tempore minima aspernatur, modi labore molestiae provident adipisci voluptatem dolorem voluptatibus asperiores possimus.</p>
-            <faust-editor>
-<!--
+
+<body>
+    <center>
+        <H1>Here's an embedded editor!</H1>
+    </center>
+
+    <faust-editor>
+        <!--
 import("stdfaust.lib");
 ctFreq = hslider("cutoffFrequency",500,50,10000,0.01);
 q = hslider("q",5,1,30,0.1);
 gain = hslider("gain",1,0,1,0.01);
 process = no.noise : fi.resonlp(ctFreq,q,gain);
 -->
-            </faust-editor>
-            <p>Nam tempora officiis sunt nisi cupiditate expedita magnam atque. Unde, itaque.</p>
-            <faust-editor>
-                <!--
+    </faust-editor>
+    <center>
+        <H1>Here's a simple DSP widget!</H1>
+
+        <faust-widget>
+            <!--
 import("stdfaust.lib");
-process = 
-    dm.cubicnl_demo : // distortion 
-    dm.wah4_demo <: // wah pedal
-    dm.phaser2_demo : // stereo phaser 
-    dm.compressor_demo : // stereo compressor
-    dm.zita_light; // stereo reverb
-                -->
-            </faust-editor>
-            <p>Minus, ducimus consequuntur? Corrupti animi aut magni nihil, dolor eos tenetur, autem deserunt et iure culpa, suscipit minus quia velit laudantium asperiores.</p>
-            <faust-widget>
-<!--
-import("stdfaust.lib");
-ctFreq = hslider("cutoffFrequency",500,50,10000,0.01);
-q = hslider("q",5,1,30,0.1);
-gain = hslider("gain",1,0,1,0.01);
-process = no.noise : fi.resonlp(ctFreq,q,gain);
+ctFreq = hslider("[0]cutoffFrequency",500,50,10000,0.01) : si.smoo;
+q = hslider("[1]q",5,1,30,0.1) : si.smoo;
+gain = hslider("[2]gain",1,0,1,0.01) : si.smoo;
+t = button("[3]gate") : si.smoo;
+process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 -->
-            </faust-widget>
-        </div>
-    </body>
+        </faust-widget>
+    </center>
+    <script src="faust-web-component.js"></script>
+
+</body>
+
 </html>
