@@ -1,11 +1,29 @@
-import { icon } from "@fortawesome/fontawesome-svg-core"
-import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
-import faustSvg from "./faustText.svg"
-import { FaustMonoDspGenerator, FaustPolyDspGenerator, IFaustMonoWebAudioNode } from "@grame/faustwasm"
-import { IFaustPolyWebAudioNode } from "@grame/faustwasm"
-import { FaustUI } from "@shren/faust-ui"
-import { faustPromise, audioCtx, get_mono_generator, get_poly_generator, compiler, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices, default_generator } from "./common"
+// Import necessary libraries and modules
+import { icon } from "@fortawesome/fontawesome-svg-core";
+import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline";
+import faustSvg from "./faustText.svg";
+import {
+    FaustMonoDspGenerator,
+    FaustPolyDspGenerator,
+    IFaustMonoWebAudioNode,
+    IFaustPolyWebAudioNode,
+} from "@grame/faustwasm";
+import { FaustUI } from "@shren/faust-ui";
+import {
+    faustPromise,
+    audioCtx,
+    get_mono_generator,
+    get_poly_generator,
+    compiler,
+    getInputDevices,
+    deviceUpdateCallbacks,
+    accessMIDIDevice,
+    midiInputCallback,
+    extractMidiAndNvoices,
+    default_generator,
+} from "./common";
 
+// Create a template for the FaustWidget component
 const template = document.createElement("template")
 template.innerHTML = `
 <div id="root">
@@ -96,20 +114,27 @@ template.innerHTML = `
 </style>
 `
 
+// Define the FaustWidget web component
 export default class FaustWidget extends HTMLElement {
     constructor() {
         super()
     }
 
+    // Called when the component is connected to the DOM
     connectedCallback() {
+        // Extract the Faust code from the inner HTML
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
         this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true))
 
+        // Query and initialize various elements in the shadow DOM
         const powerButton = this.shadowRoot!.querySelector("#power") as HTMLButtonElement
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
+        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
 
+        // Enable the power button once Faust is ready
         faustPromise.then(() => powerButton.disabled = false)
 
+        // State variables
         let on = false
         let gmidi = false
         let gnvoices = -1
@@ -119,8 +144,10 @@ export default class FaustWidget extends HTMLElement {
         let generator: FaustMonoDspGenerator | FaustPolyDspGenerator
         let sourceNode: AudioBufferSourceNode = undefined;
 
+        // Function to setup the Faust environment
         const setup = async () => {
             await faustPromise
+
             // Compile Faust code to access JSON metadata 
             await default_generator.compile(compiler, "main", code, "-ftz 2")
             const json = default_generator.getMeta()
@@ -134,18 +161,20 @@ export default class FaustWidget extends HTMLElement {
             await generator.compile(compiler, "main", code, "-ftz 2");
             const ui = generator.getUI();
 
+            // Generate Faust UI
             faustUI = new FaustUI({ ui, root: faustUIRoot });
             faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px";
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px";
             faustUI.resize();
         }
 
+        // Function to start the Faust node and audio context
         const start = async () => {
             if (audioCtx.state === "suspended") {
                 await audioCtx.resume()
             }
 
-            // Create an audio node from compiled Faust
+            // Create an audio node from compiled Faust if not already created
             if (node === undefined) {
                 if (gnvoices > 0) {
                     node = (await (generator as FaustPolyDspGenerator).createNode(audioCtx, gnvoices))!
@@ -154,7 +183,7 @@ export default class FaustWidget extends HTMLElement {
                 }
             }
 
-            // Access MIDI device
+            // Access MIDI device if available
             if (gmidi) {
                 accessMIDIDevice(midiInputCallback(node))
                     .then(() => {
@@ -165,9 +194,11 @@ export default class FaustWidget extends HTMLElement {
                     });
             }
 
+            // Set up parameter handling for Faust UI
             faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
 
+            // Enable audio input if necessary
             if (node.numberOfInputs > 0) {
                 audioInputSelector.disabled = false
                 updateInputDevices(await getInputDevices())
@@ -177,15 +208,18 @@ export default class FaustWidget extends HTMLElement {
                 audioInputSelector.innerHTML = "<option>Audio input</option>"
             }
 
+            // Connect Faust node to the audio context destination
             node.connect(audioCtx.destination)
             powerButton.style.color = "#ffa500"
         }
 
+        // Function to stop the Faust node
         const stop = () => {
             node?.disconnect()
             powerButton.style.color = "#fff"
         }
 
+        // Toggle the Faust node on/off
         powerButton.onclick = () => {
             if (on) {
                 stop()
@@ -195,8 +229,7 @@ export default class FaustWidget extends HTMLElement {
             on = !on
         }
 
-        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
-
+        // Function to update available audio input devices
         const updateInputDevices = (devices: MediaDeviceInfo[]) => {
             if (audioInputSelector.disabled) return
             while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove()
@@ -209,6 +242,7 @@ export default class FaustWidget extends HTMLElement {
         }
         deviceUpdateCallbacks.push(updateInputDevices)
 
+        // Function to connect selected audio input device
         const connectInput = async () => {
             const deviceId = audioInputSelector.value
             const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
@@ -248,8 +282,10 @@ export default class FaustWidget extends HTMLElement {
             }
         }
 
+        // Set input change handler
         audioInputSelector.onchange = connectInput
 
+        // Initial setup
         setTimeout(() => {
             // Display a "Compiling..." message while Faust is compiling
             faustUIRoot.innerHTML = "<p><center>Compiling...</center></p>";

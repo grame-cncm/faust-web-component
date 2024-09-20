@@ -1,13 +1,28 @@
-import { icon } from "@fortawesome/fontawesome-svg-core"
-import { FaustMonoDspGenerator, FaustPolyDspGenerator, IFaustMonoWebAudioNode } from "@grame/faustwasm"
-import { FaustUI } from "@shren/faust-ui"
-import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline"
-import Split from "split.js"
-import { faustPromise, audioCtx, compiler, svgDiagrams, default_generator, get_mono_generator, get_poly_generator, getInputDevices, deviceUpdateCallbacks, accessMIDIDevice, midiInputCallback, extractMidiAndNvoices } from "./common"
-import { createEditor, setError, clearError } from "./editor"
-import { Scope } from "./scope"
-import faustSvg from "./faustText.svg"
+// Import necessary libraries and modules
+import { icon } from "@fortawesome/fontawesome-svg-core";
+import { FaustMonoDspGenerator, FaustPolyDspGenerator, IFaustMonoWebAudioNode } from "@grame/faustwasm";
+import { FaustUI } from "@shren/faust-ui";
+import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline";
+import Split from "split.js";
+import {
+    faustPromise,
+    audioCtx,
+    compiler,
+    svgDiagrams,
+    default_generator,
+    get_mono_generator,
+    get_poly_generator,
+    getInputDevices,
+    deviceUpdateCallbacks,
+    accessMIDIDevice,
+    midiInputCallback,
+    extractMidiAndNvoices
+} from "./common";
+import { createEditor, setError, clearError } from "./editor";
+import { Scope } from "./scope";
+import faustSvg from "./faustText.svg";
 
+// Create a template for the component
 const template = document.createElement("template")
 template.innerHTML = `
 <div id="root">
@@ -212,25 +227,28 @@ template.innerHTML = `
 </style>
 `
 
+// FaustEditor Web Component
 export default class FaustEditor extends HTMLElement {
     constructor() {
         super()
     }
 
     connectedCallback() {
+        // Initial setup when the component is attached to the DOM
         const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
         this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true))
 
+        // Set up links, buttons, and editor
         const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
+        const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
+        const editor = createEditor(editorEl, code)
+
         ideLink.onfocus = () => {
             // Open current contents of editor in IDE
             const urlParams = new URLSearchParams()
             urlParams.set("inline", btoa(editor.state.doc.toString()).replace("+", "-").replace("/", "_"))
             ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`
         }
-
-        const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = createEditor(editorEl, code)
 
         const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
         const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
@@ -241,6 +259,7 @@ export default class FaustEditor extends HTMLElement {
         const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[]
         const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[]
 
+        // Initialize split.js for resizable editor and sidebar
         const split = Split([editorEl, sidebar], {
             sizes: [100, 0],
             minSize: [0, 20],
@@ -251,8 +270,11 @@ export default class FaustEditor extends HTMLElement {
 
         faustPromise.then(() => runButton.disabled = false)
 
+        // Default sizes for sidebar
         const defaultSizes = [70, 30]
         let sidebarOpen = false
+
+        // Function to open the sidebar with predefined sizes
         const openSidebar = () => {
             if (!sidebarOpen) {
                 split.setSizes(defaultSizes)
@@ -260,6 +282,7 @@ export default class FaustEditor extends HTMLElement {
             sidebarOpen = true
         }
 
+        // Variables for audio and visualization nodes
         let node: IFaustMonoWebAudioNode | undefined
         let input: MediaStreamAudioSourceNode | undefined
         let analyser: AnalyserNode | undefined
@@ -269,11 +292,13 @@ export default class FaustEditor extends HTMLElement {
         let gnvoices = -1
         let sourceNode: AudioBufferSourceNode = undefined;
 
+        // Event handler for the run button
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
                 await audioCtx.resume()
             }
             await faustPromise
+
             // Compile Faust code
             const code = editor.state.doc.toString()
             let generator = null
@@ -293,6 +318,7 @@ export default class FaustEditor extends HTMLElement {
                 setError(editor, e)
                 return
             }
+
             // Clear any old errors
             clearError(editor)
 
@@ -303,6 +329,8 @@ export default class FaustEditor extends HTMLElement {
             } else {
                 node = (await (generator as FaustMonoDspGenerator).createNode(audioCtx))!
             }
+
+            // Set up audio input if necessary
             if (node.numberOfInputs > 0) {
                 audioInputSelector.disabled = false
                 updateInputDevices(await getInputDevices())
@@ -317,7 +345,7 @@ export default class FaustEditor extends HTMLElement {
                 tabButton.disabled = false
             }
 
-            // Access MIDI device
+            // Access MIDI device if available
             if (gmidi) {
                 accessMIDIDevice(midiInputCallback(node))
                     .then(() => {
@@ -329,6 +357,7 @@ export default class FaustEditor extends HTMLElement {
             }
 
             openSidebar()
+
             // Clear old tab contents
             for (const tab of tabContents) {
                 while (tab.lastChild) tab.lastChild.remove()
@@ -356,6 +385,7 @@ export default class FaustEditor extends HTMLElement {
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
         }
 
+        // Function to set SVG in the block diagram tab
         const setSVG = (svgString: string) => {
             faustDiagram.innerHTML = svgString
 
@@ -371,6 +401,7 @@ export default class FaustEditor extends HTMLElement {
 
         let animPlot: number | undefined
 
+        // Function to render the scope
         const drawScope = () => {
             scope!.renderScope([{
                 analyser: analyser!,
@@ -380,11 +411,13 @@ export default class FaustEditor extends HTMLElement {
             animPlot = requestAnimationFrame(drawScope)
         }
 
+        // Function to render the spectrum
         const drawSpectrum = () => {
             spectrum!.renderSpectrum(analyser!)
             animPlot = requestAnimationFrame(drawSpectrum)
         }
 
+        // Function to switch between tabs
         const openTab = (i: number) => {
             for (const [j, tab] of tabButtons.entries()) {
                 if (i === j) {
@@ -422,10 +455,12 @@ export default class FaustEditor extends HTMLElement {
             }
         }
 
+        // Attach event listeners to tab buttons
         for (const [i, tabButton] of tabButtons.entries()) {
             tabButton.onclick = () => openTab(i)
         }
 
+        // Event handler for the stop button
         stopButton.onclick = () => {
             if (node !== undefined) {
                 node.disconnect()
@@ -436,8 +471,10 @@ export default class FaustEditor extends HTMLElement {
             }
         }
 
+        // Audio input selector element
         const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
 
+        // Update the audio input device list
         const updateInputDevices = (devices: MediaDeviceInfo[]) => {
             if (audioInputSelector.disabled) return
             while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove()
@@ -450,6 +487,7 @@ export default class FaustEditor extends HTMLElement {
         }
         deviceUpdateCallbacks.push(updateInputDevices)
 
+        // Connect the selected audio input device
         const connectInput = async () => {
             const deviceId = audioInputSelector.value
             const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
