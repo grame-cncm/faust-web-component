@@ -279,14 +279,14 @@ export default class FaustEditor extends HTMLElement {
             let generator = null
             try {
                 // Compile Faust code to access JSON metadata
-                await default_generator.compile(compiler, "main", code, "")
+                await default_generator.compile(compiler, "main", code, "-ftz 2")
                 const json = default_generator.getMeta()
                 let { midi, nvoices } = extractMidiAndNvoices(json);
                 gmidi = midi;
                 gnvoices = nvoices;
 
-                // Build the generator
-                generator = nvoices > 0 ? get_poly_generator() : get_mono_generator();
+                // Build the generator (possibly reusing default_generator which is a FaustMonoDspGenerator) 
+                generator = nvoices > 0 ? get_poly_generator() : default_generator;
                 await generator.compile(compiler, "main", code, "-ftz 2");
 
             } catch (e: any) {
@@ -350,9 +350,6 @@ export default class FaustEditor extends HTMLElement {
             faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
 
-            // Create SVG block diagram
-            setSVG(svgDiagrams.from("main", code, "")["process.svg"])
-
             // Set editor size to fit UI size
             editorEl.style.height = `${Math.max(125, faustUI.minHeight)}px`;
             faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
@@ -373,6 +370,7 @@ export default class FaustEditor extends HTMLElement {
         }
 
         let animPlot: number | undefined
+
         const drawScope = () => {
             scope!.renderScope([{
                 analyser: analyser!,
@@ -397,7 +395,20 @@ export default class FaustEditor extends HTMLElement {
                     tabContents[j].classList.remove("active")
                 }
             }
-            if (i === 2) {
+            // Check if the clicked tab is the "Block Diagram" tab (index 1)
+            if (i === 1) {
+                // Only set the SVG if it hasn't been set before (avoiding multiple loads)
+                if (faustDiagram.innerHTML.trim() === "") {
+
+                    // Display a "Computing SVG..." message while the SVG is being generated
+                    faustDiagram.innerHTML = "<p><center>Computing SVG...</center></p>";
+
+                    // Use setTimeout to defer the SVG rendering to a separate task
+                    setTimeout(() => {
+                        setSVG(svgDiagrams.from("main", code, "")["process.svg"]);
+                    }, 0);
+                }
+            } else if (i === 2) {
                 scope!.onResize()
                 if (animPlot !== undefined) cancelAnimationFrame(animPlot)
                 animPlot = requestAnimationFrame(drawScope)

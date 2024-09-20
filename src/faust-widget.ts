@@ -121,15 +121,16 @@ export default class FaustWidget extends HTMLElement {
 
         const setup = async () => {
             await faustPromise
-            // Compile Faust code to access JSON metadata
-            await default_generator.compile(compiler, "main", code, "")
+            // Compile Faust code to access JSON metadata 
+            await default_generator.compile(compiler, "main", code, "-ftz 2")
             const json = default_generator.getMeta()
             let { midi, nvoices } = extractMidiAndNvoices(json);
             gmidi = midi;
             gnvoices = nvoices;
 
-            // Build the generator and generate UI
-            generator = nvoices > 0 ? get_poly_generator() : get_mono_generator();
+            // Build the generator (possibly reusing default_generator which is a FaustMonoDspGenerator) 
+            // and generate UI
+            generator = nvoices > 0 ? get_poly_generator() : default_generator;
             await generator.compile(compiler, "main", code, "-ftz 2");
             const ui = generator.getUI();
 
@@ -249,7 +250,12 @@ export default class FaustWidget extends HTMLElement {
 
         audioInputSelector.onchange = connectInput
 
-        setup()
+        setTimeout(() => {
+            // Display a "Compiling..." message while Faust is compiling
+            faustUIRoot.innerHTML = "<p><center>Compiling...</center></p>";
+            setup();
+        }, 0);
+
     }
 }
 
