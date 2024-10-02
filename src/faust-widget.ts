@@ -183,6 +183,9 @@ export default class FaustWidget extends HTMLElement {
                 }
             }
 
+            // Start sensors if available
+            await node.startSensors();
+
             // Access MIDI device if available
             if (gmidi) {
                 accessMIDIDevice(midiInputCallback(node))
@@ -216,6 +219,7 @@ export default class FaustWidget extends HTMLElement {
         // Function to stop the Faust node
         const stop = () => {
             node?.disconnect()
+            node?.stopSensors();
             powerButton.style.color = "#fff"
         }
 

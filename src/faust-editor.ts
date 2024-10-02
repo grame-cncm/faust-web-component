@@ -345,6 +345,9 @@ export default class FaustEditor extends HTMLElement {
                 tabButton.disabled = false
             }
 
+            // Start sensors if available
+            await node.startSensors();
+
             // Access MIDI device if available
             if (gmidi) {
                 accessMIDIDevice(midiInputCallback(node))
@@ -463,10 +466,11 @@ export default class FaustEditor extends HTMLElement {
         // Event handler for the stop button
         stopButton.onclick = () => {
             if (node !== undefined) {
-                node.disconnect()
-                node.destroy()
-                node = undefined
-                stopButton.disabled = true
+                node.disconnect();
+                node.stopSensors();
+                node.destroy();
+                node = undefined;
+                stopButton.disabled = true;
                 // TODO: Maybe disable controls in faust-ui tab.
             }
         }
