@@ -12,7 +12,6 @@ import { FaustUI } from "@shren/faust-ui";
 import {
     faustPromise,
     audioCtx,
-    get_mono_generator,
     get_poly_generator,
     compiler,
     getInputDevices,
@@ -117,40 +116,40 @@ template.innerHTML = `
 // Define the FaustWidget web component
 export default class FaustWidget extends HTMLElement {
     constructor() {
-        super()
+        super();
     }
 
     // Called when the component is connected to the DOM
     connectedCallback() {
         // Extract the Faust code from the inner HTML
-        const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true))
+        const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim();
+        this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true));
 
         // Query and initialize various elements in the shadow DOM
-        const powerButton = this.shadowRoot!.querySelector("#power") as HTMLButtonElement
-        const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
-        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
+        const powerButton = this.shadowRoot!.querySelector("#power") as HTMLButtonElement;
+        const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement;
+        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement;
 
         // Enable the power button once Faust is ready
-        faustPromise.then(() => powerButton.disabled = false)
+        faustPromise.then(() => powerButton.disabled = false);
 
         // State variables
-        let on = false
-        let gmidi = false
-        let gnvoices = -1
-        let node: IFaustMonoWebAudioNode | IFaustPolyWebAudioNode
-        let input: MediaStreamAudioSourceNode | undefined
-        let faustUI: FaustUI
-        let generator: FaustMonoDspGenerator | FaustPolyDspGenerator
-        let sourceNode: AudioBufferSourceNode = undefined;
+        let on = false;
+        let gmidi = false;
+        let gnvoices = -1;
+        let node: IFaustMonoWebAudioNode | IFaustPolyWebAudioNode;
+        let input: MediaStreamAudioSourceNode | undefined;
+        let faustUI: FaustUI;
+        let generator: FaustMonoDspGenerator | FaustPolyDspGenerator;
+        let sourceNode: AudioBufferSourceNode | undefined;
 
         // Function to setup the Faust environment
         const setup = async () => {
-            await faustPromise
+            await faustPromise;
 
             // Compile Faust code to access JSON metadata 
-            await default_generator.compile(compiler, "main", code, "-ftz 2")
-            const json = default_generator.getMeta()
+            await default_generator.compile(compiler, "main", code, "-ftz 2");
+            const json = default_generator.getMeta();
             let { midi, nvoices } = extractMidiAndNvoices(json);
             gmidi = midi;
             gnvoices = nvoices;
@@ -171,15 +170,15 @@ export default class FaustWidget extends HTMLElement {
         // Function to start the Faust node and audio context
         const start = async () => {
             if (audioCtx.state === "suspended") {
-                await audioCtx.resume()
+                await audioCtx.resume();
             }
 
             // Create an audio node from compiled Faust if not already created
             if (node === undefined) {
                 if (gnvoices > 0) {
-                    node = (await (generator as FaustPolyDspGenerator).createNode(audioCtx, gnvoices))!
+                    node = (await (generator as FaustPolyDspGenerator).createNode(audioCtx, gnvoices))!;
                 } else {
-                    node = (await (generator as FaustMonoDspGenerator).createNode(audioCtx))!
+                    node = (await (generator as FaustMonoDspGenerator).createNode(audioCtx))!;
                 }
             }
 
@@ -198,61 +197,61 @@ export default class FaustWidget extends HTMLElement {
             }
 
             // Set up parameter handling for Faust UI
-            faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
-            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
+            faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value);
+            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value));
 
             // Enable audio input if necessary
             if (node.numberOfInputs > 0) {
-                audioInputSelector.disabled = false
-                updateInputDevices(await getInputDevices())
-                await connectInput()
+                audioInputSelector.disabled = false;
+                updateInputDevices(await getInputDevices());
+                await connectInput();
             } else {
-                audioInputSelector.disabled = true
-                audioInputSelector.innerHTML = "<option>Audio input</option>"
+                audioInputSelector.disabled = true;
+                audioInputSelector.innerHTML = "<option>Audio input</option>";
             }
 
             // Connect Faust node to the audio context destination
-            node.connect(audioCtx.destination)
-            powerButton.style.color = "#ffa500"
+            node.connect(audioCtx.destination);
+            powerButton.style.color = "#ffa500";
         }
 
         // Function to stop the Faust node
         const stop = () => {
-            node?.disconnect()
+            node?.disconnect();
             node?.stopSensors();
-            powerButton.style.color = "#fff"
+            powerButton.style.color = "#fff";
         }
 
         // Toggle the Faust node on/off
         powerButton.onclick = () => {
             if (on) {
-                stop()
+                stop();
             } else {
-                start()
+                start();
             }
-            on = !on
+            on = !on;
         }
 
         // Function to update available audio input devices
         const updateInputDevices = (devices: MediaDeviceInfo[]) => {
-            if (audioInputSelector.disabled) return
-            while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove()
+            if (audioInputSelector.disabled) return;
+            while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove();
             for (const device of devices) {
                 if (device.kind === "audioinput") {
-                    audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId))
+                    audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId));
                 }
             }
-            audioInputSelector.appendChild(new Option("Audio File", "Audio File"))
+            audioInputSelector.appendChild(new Option("Audio File", "Audio File"));
         }
-        deviceUpdateCallbacks.push(updateInputDevices)
+        deviceUpdateCallbacks.push(updateInputDevices);
 
         // Function to connect selected audio input device
         const connectInput = async () => {
-            const deviceId = audioInputSelector.value
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+            const deviceId = audioInputSelector.value;
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
             if (input) {
-                input.disconnect()
-                input = undefined
+                input.disconnect();
+                input = undefined;
             }
             if (node && node.numberOfInputs > 0) {
                 if (deviceId == "Audio File") {
@@ -287,7 +286,7 @@ export default class FaustWidget extends HTMLElement {
         }
 
         // Set input change handler
-        audioInputSelector.onchange = connectInput
+        audioInputSelector.onchange = connectInput;
 
         // Initial setup
         setTimeout(() => {

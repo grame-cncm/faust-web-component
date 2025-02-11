@@ -14,6 +14,7 @@ declare license "MIT";
 declare copyright "(c)Mike Olsen, CCRMA (Stanford University)";
 
 import("stdfaust.lib");
+declare options "[midi:on][nvoices:12]";
 
 process = pm.SFFormantModelFofSmooth_ui_MIDI <: _,_;
 -->

@@ -10,7 +10,6 @@ import {
     compiler,
     svgDiagrams,
     default_generator,
-    get_mono_generator,
     get_poly_generator,
     getInputDevices,
     deviceUpdateCallbacks,
@@ -230,34 +229,34 @@ template.innerHTML = `
 // FaustEditor Web Component
 export default class FaustEditor extends HTMLElement {
     constructor() {
-        super()
+        super();
     }
 
     connectedCallback() {
         // Initial setup when the component is attached to the DOM
-        const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim()
-        this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true))
+        const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim();
+        this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true));
 
         // Set up links, buttons, and editor
-        const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement
-        const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement
-        const editor = createEditor(editorEl, code)
+        const ideLink = this.shadowRoot!.querySelector("#ide") as HTMLAnchorElement;
+        const editorEl = this.shadowRoot!.querySelector("#editor") as HTMLDivElement;
+        const editor = createEditor(editorEl, code);
 
         ideLink.onfocus = () => {
             // Open current contents of editor in IDE
-            const urlParams = new URLSearchParams()
-            urlParams.set("inline", btoa(editor.state.doc.toString()).replace("+", "-").replace("/", "_"))
-            ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`
+            const urlParams = new URLSearchParams();
+            urlParams.set("inline", btoa(editor.state.doc.toString()).replace("+", "-").replace("/", "_"));
+            ideLink.href = `https://faustide.grame.fr/?${urlParams.toString()}`;
         }
 
-        const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement
-        const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement
-        const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement
-        const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement
-        const sidebar = this.shadowRoot!.querySelector("#sidebar") as HTMLDivElement
-        const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement
-        const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[]
-        const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[]
+        const runButton = this.shadowRoot!.querySelector("#run") as HTMLButtonElement;
+        const stopButton = this.shadowRoot!.querySelector("#stop") as HTMLButtonElement;
+        const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement;
+        const faustDiagram = this.shadowRoot!.querySelector("#faust-diagram") as HTMLDivElement;
+        const sidebar = this.shadowRoot!.querySelector("#sidebar") as HTMLDivElement;
+        const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement;
+        const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[];
+        const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[];
 
         // Initialize split.js for resizable editor and sidebar
         const split = Split([editorEl, sidebar], {
@@ -268,44 +267,44 @@ export default class FaustEditor extends HTMLElement {
             onDragEnd: () => { scope?.onResize(); spectrum?.onResize() },
         })
 
-        faustPromise.then(() => runButton.disabled = false)
+        faustPromise.then(() => runButton.disabled = false);
 
         // Default sizes for sidebar
-        const defaultSizes = [70, 30]
-        let sidebarOpen = false
+        const defaultSizes = [70, 30];
+        let sidebarOpen = false;
 
         // Function to open the sidebar with predefined sizes
         const openSidebar = () => {
             if (!sidebarOpen) {
-                split.setSizes(defaultSizes)
+                split.setSizes(defaultSizes);
             }
-            sidebarOpen = true
+            sidebarOpen = true;
         }
 
         // Variables for audio and visualization nodes
-        let node: IFaustMonoWebAudioNode | undefined
-        let input: MediaStreamAudioSourceNode | undefined
-        let analyser: AnalyserNode | undefined
-        let scope: Scope | undefined
-        let spectrum: Scope | undefined
-        let gmidi = false
-        let gnvoices = -1
-        let sourceNode: AudioBufferSourceNode = undefined;
+        let node: IFaustMonoWebAudioNode | undefined;
+        let input: MediaStreamAudioSourceNode | undefined;
+        let analyser: AnalyserNode | undefined;
+        let scope: Scope | undefined;
+        let spectrum: Scope | undefined;
+        let gmidi = false;
+        let gnvoices = -1;
+        let sourceNode: AudioBufferSourceNode | undefined;
 
         // Event handler for the run button
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
-                await audioCtx.resume()
+                await audioCtx.resume();
             }
-            await faustPromise
+            await faustPromise;
 
             // Compile Faust code
-            const code = editor.state.doc.toString()
-            let generator = null
+            const code = editor.state.doc.toString();
+            let generator = null;
             try {
                 // Compile Faust code to access JSON metadata
-                await default_generator.compile(compiler, "main", code, "-ftz 2")
-                const json = default_generator.getMeta()
+                await default_generator.compile(compiler, "main", code, "-ftz 2");
+                const json = default_generator.getMeta();
                 let { midi, nvoices } = extractMidiAndNvoices(json);
                 gmidi = midi;
                 gnvoices = nvoices;
@@ -315,34 +314,34 @@ export default class FaustEditor extends HTMLElement {
                 await generator.compile(compiler, "main", code, "-ftz 2");
 
             } catch (e: any) {
-                setError(editor, e)
+                setError(editor, e);
                 return
             }
 
             // Clear any old errors
-            clearError(editor)
+            clearError(editor);
 
             // Create an audio node from compiled Faust
-            if (node !== undefined) node.disconnect()
+            if (node !== undefined) node.disconnect();
             if (gnvoices > 0) {
-                node = (await (generator as FaustPolyDspGenerator).createNode(audioCtx, gnvoices))!
+                node = (await (generator as FaustPolyDspGenerator).createNode(audioCtx, gnvoices))!;
             } else {
-                node = (await (generator as FaustMonoDspGenerator).createNode(audioCtx))!
+                node = (await (generator as FaustMonoDspGenerator).createNode(audioCtx))!;
             }
 
             // Set up audio input if necessary
             if (node.numberOfInputs > 0) {
-                audioInputSelector.disabled = false
-                updateInputDevices(await getInputDevices())
-                await connectInput()
+                audioInputSelector.disabled = false;
+                updateInputDevices(await getInputDevices());
+                await connectInput();
             } else {
-                audioInputSelector.disabled = true
-                audioInputSelector.innerHTML = "<option>Audio input</option>"
+                audioInputSelector.disabled = true;
+                audioInputSelector.innerHTML = "<option>Audio input</option>";
             }
-            node.connect(audioCtx.destination)
-            stopButton.disabled = false
+            node.connect(audioCtx.destination);
+            stopButton.disabled = false;
             for (const tabButton of tabButtons) {
-                tabButton.disabled = false
+                tabButton.disabled = false;
             }
 
             // Start sensors if available
@@ -359,50 +358,50 @@ export default class FaustEditor extends HTMLElement {
                     });
             }
 
-            openSidebar()
+            openSidebar();
 
             // Clear old tab contents
             for (const tab of tabContents) {
-                while (tab.lastChild) tab.lastChild.remove()
+                while (tab.lastChild) tab.lastChild.remove();
             }
             // Create scope & spectrum plots
             analyser = new AnalyserNode(audioCtx, {
                 fftSize: Math.pow(2, 11), minDecibels: -96, maxDecibels: 0, smoothingTimeConstant: 0.85
-            })
-            node.connect(analyser)
-            scope = new Scope(tabContents[2])
-            spectrum = new Scope(tabContents[3])
+            });
+            node.connect(analyser);
+            scope = new Scope(tabContents[2]);
+            spectrum = new Scope(tabContents[3]);
 
             // If there are UI elements, open Faust UI (controls tab); otherwise open spectrum analyzer.
-            const ui = node.getUI()
-            openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 3)
+            const ui = node.getUI();
+            openTab(ui.length > 1 || ui[0].items.length > 0 ? 0 : 3);
 
             // Create controls via Faust UI
-            const faustUI = new FaustUI({ ui, root: faustUIRoot })
-            faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value)
-            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value))
+            const faustUI = new FaustUI({ ui, root: faustUIRoot });
+            faustUI.paramChangeByUI = (path, value) => node?.setParamValue(path, value);
+            node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value));
 
             // Set editor size to fit UI size
             editorEl.style.height = `${Math.max(125, faustUI.minHeight)}px`;
-            faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px"
-            faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px"
+            faustUIRoot.style.width = faustUI.minWidth * 1.25 + "px";
+            faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px";
         }
 
         // Function to set SVG in the block diagram tab
         const setSVG = (svgString: string) => {
-            faustDiagram.innerHTML = svgString
+            faustDiagram.innerHTML = svgString;
 
             for (const a of faustDiagram.querySelectorAll("a")) {
                 a.onclick = e => {
-                    e.preventDefault()
-                    const filename = (a.href as any as SVGAnimatedString).baseVal
-                    const svgString = compiler.fs().readFile("main-svg/" + filename, { encoding: "utf8" }) as string
-                    setSVG(svgString)
+                    e.preventDefault();
+                    const filename = (a.href as any as SVGAnimatedString).baseVal;
+                    const svgString = compiler.fs().readFile("main-svg/" + filename, { encoding: "utf8" }) as string;
+                    setSVG(svgString);
                 }
             }
         }
 
-        let animPlot: number | undefined
+        let animPlot: number | undefined;
 
         // Function to render the scope
         const drawScope = () => {
@@ -411,24 +410,24 @@ export default class FaustEditor extends HTMLElement {
                 style: "rgb(212, 100, 100)",
                 edgeThreshold: 0.09,
             }])
-            animPlot = requestAnimationFrame(drawScope)
+            animPlot = requestAnimationFrame(drawScope);
         }
 
         // Function to render the spectrum
         const drawSpectrum = () => {
-            spectrum!.renderSpectrum(analyser!)
-            animPlot = requestAnimationFrame(drawSpectrum)
+            spectrum!.renderSpectrum(analyser!);
+            animPlot = requestAnimationFrame(drawSpectrum);
         }
 
         // Function to switch between tabs
         const openTab = (i: number) => {
             for (const [j, tab] of tabButtons.entries()) {
                 if (i === j) {
-                    tab.classList.add("active")
-                    tabContents[j].classList.add("active")
+                    tab.classList.add("active");
+                    tabContents[j].classList.add("active");
                 } else {
-                    tab.classList.remove("active")
-                    tabContents[j].classList.remove("active")
+                    tab.classList.remove("active");
+                    tabContents[j].classList.remove("active");
                 }
             }
             // Check if the clicked tab is the "Block Diagram" tab (index 1)
@@ -445,22 +444,22 @@ export default class FaustEditor extends HTMLElement {
                     }, 0);
                 }
             } else if (i === 2) {
-                scope!.onResize()
-                if (animPlot !== undefined) cancelAnimationFrame(animPlot)
-                animPlot = requestAnimationFrame(drawScope)
+                scope!.onResize();
+                if (animPlot !== undefined) cancelAnimationFrame(animPlot);
+                animPlot = requestAnimationFrame(drawScope);
             } else if (i === 3) {
-                spectrum!.onResize()
-                if (animPlot !== undefined) cancelAnimationFrame(animPlot)
-                animPlot = requestAnimationFrame(drawSpectrum)
+                spectrum!.onResize();
+                if (animPlot !== undefined) cancelAnimationFrame(animPlot);
+                animPlot = requestAnimationFrame(drawSpectrum);
             } else if (animPlot !== undefined) {
-                cancelAnimationFrame(animPlot)
-                animPlot = undefined
+                cancelAnimationFrame(animPlot);
+                animPlot = undefined;
             }
         }
 
         // Attach event listeners to tab buttons
         for (const [i, tabButton] of tabButtons.entries()) {
-            tabButton.onclick = () => openTab(i)
+            tabButton.onclick = () => openTab(i);
         }
 
         // Event handler for the stop button
@@ -476,28 +475,28 @@ export default class FaustEditor extends HTMLElement {
         }
 
         // Audio input selector element
-        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement
+        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement;
 
         // Update the audio input device list
         const updateInputDevices = (devices: MediaDeviceInfo[]) => {
-            if (audioInputSelector.disabled) return
-            while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove()
+            if (audioInputSelector.disabled) return;
+            while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove();
             for (const device of devices) {
                 if (device.kind === "audioinput") {
-                    audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId))
+                    audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId));
                 }
             }
-            audioInputSelector.appendChild(new Option("Audio File", "Audio File"))
+            audioInputSelector.appendChild(new Option("Audio File", "Audio File"));
         }
-        deviceUpdateCallbacks.push(updateInputDevices)
+        deviceUpdateCallbacks.push(updateInputDevices);
 
         // Connect the selected audio input device
         const connectInput = async () => {
-            const deviceId = audioInputSelector.value
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+            const deviceId = audioInputSelector.value;
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
             if (input) {
-                input.disconnect()
-                input = undefined
+                input.disconnect();
+                input = undefined;
             }
             if (node && node.numberOfInputs > 0) {
                 if (deviceId == "Audio File") {
@@ -531,6 +530,6 @@ export default class FaustEditor extends HTMLElement {
             }
         }
 
-        audioInputSelector.onchange = connectInput
+        audioInputSelector.onchange = connectInput;
     }
 }
