@@ -82,7 +82,7 @@ The HTML [index.html](./index.html) example page can be copied and tested in `di
 
 ## NPM package 
 
- A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.4.5/dist/faust-web-component.js (possibly update the version number).
+ A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.5.0/dist/faust-web-component.js (possibly update the version number).
  
  Here is an HTML example using this model:
  
@@ -101,7 +101,7 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 -->
 </faust-editor>
 
-<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.4.5/dist/faust-web-component.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.5.0/dist/faust-web-component.js"></script>
 ```
 
 ## Demo
