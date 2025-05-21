@@ -234,7 +234,7 @@ export default class FaustEditor extends HTMLElement {
 
     connectedCallback() {
         // Initial setup when the component is attached to the DOM
-        const code = this.innerHTML.replace("<!--", "").replace("-->", "").trim();
+        let code = this.innerHTML.replace("<!--", "").replace("-->", "").trim();
         this.attachShadow({ mode: "open" }).appendChild(template.content.cloneNode(true));
 
         // Set up links, buttons, and editor
@@ -291,6 +291,11 @@ export default class FaustEditor extends HTMLElement {
         let gnvoices = -1;
         let sourceNode: AudioBufferSourceNode | undefined;
 
+        // Counter for compiled DSP 
+        let compiledDSPCounter = 0;
+        // Counter for compiled SVG
+        let compiledSVGCounter = 0;
+
         // Event handler for the run button
         runButton.onclick = async () => {
             if (audioCtx.state === "suspended") {
@@ -299,7 +304,7 @@ export default class FaustEditor extends HTMLElement {
             await faustPromise;
 
             // Compile Faust code
-            const code = editor.state.doc.toString();
+            code = editor.state.doc.toString();
             let generator = null;
             try {
                 // Compile Faust code to access JSON metadata
@@ -312,6 +317,7 @@ export default class FaustEditor extends HTMLElement {
                 // Build the generator (possibly reusing default_generator which is a FaustMonoDspGenerator) 
                 generator = nvoices > 0 ? get_poly_generator() : default_generator;
                 await generator.compile(compiler, "main", code, "-ftz 2");
+                compiledDSPCounter++;
 
             } catch (e: any) {
                 setError(editor, e);
@@ -432,15 +438,15 @@ export default class FaustEditor extends HTMLElement {
             }
             // Check if the clicked tab is the "Block Diagram" tab (index 1)
             if (i === 1) {
-                // Only set the SVG if it hasn't been set before (avoiding multiple loads)
-                if (faustDiagram.innerHTML.trim() === "") {
-
+                // Check if the SVG has already been compiled for a given DSP
+                if (compiledSVGCounter !== compiledDSPCounter) {
                     // Display a "Computing SVG..." message while the SVG is being generated
                     faustDiagram.innerHTML = "<p><center>Computing SVG...</center></p>";
 
                     // Use setTimeout to defer the SVG rendering to a separate task
                     setTimeout(() => {
                         setSVG(svgDiagrams.from("main", code, "")["process.svg"]);
+                        compiledSVGCounter = compiledDSPCounter;
                     }, 0);
                 }
             } else if (i === 2) {
