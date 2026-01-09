@@ -85,7 +85,6 @@ export class Scope {
             
             if (risingEdge >= this.canvasWidth) { risingEdge = 0 }
             
-            
             while (timeData[risingEdge] < edgeThreshold &&
                 risingEdge <= this.canvasWidth  &&
                 risingEdge< timeData.length) {
