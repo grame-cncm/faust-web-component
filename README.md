@@ -3,7 +3,7 @@
 This package provides two [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) for embedding interactive [Faust](https://faust.grame.fr) snippets in web pages.
 
 - `<faust-editor>` displays an editor (using [CodeMirror 6](https://codemirror.net/)) with executable, editable Faust code, along with some bells & whistles (controls, block diagram, plots) in a side pane.
-This component is ideal for demonstrating some code in Faust and allowing the reader to try it out and tweak it themselves without having to leave the page. (For more extensive work, it also includes a button to open the code in the Faust IDE.)
+  This component is ideal for demonstrating some code in Faust and allowing the reader to try it out and tweak it themselves without having to leave the page. (For more extensive work, it also includes a button to open the code in the Faust IDE.)
 
 - `<faust-widget>` just shows the controls and does not allow editing, so it serves simply as a way to embed interactive DSP.
 
@@ -28,7 +28,7 @@ The editor and widget components can be used with the following HTML syntax:
 <p><em>Here's an embedded editor!</em></p>
 
 <faust-editor>
-<!--
+  <!--
 import("stdfaust.lib");
 ctFreq = hslider("cutoffFrequency",500,50,10000,0.01);
 q = hslider("q",5,1,30,0.1);
@@ -40,7 +40,7 @@ process = no.noise : fi.resonlp(ctFreq,q,gain);
 <p><em>And here's a simple DSP widget!</em></p>
 
 <faust-widget>
-<!--
+  <!--
 import("stdfaust.lib");
 ctFreq = hslider("[0]cutoffFrequency",500,50,10000,0.01) : si.smoo;
 q = hslider("[1]q",5,1,30,0.1) : si.smoo;
@@ -61,7 +61,7 @@ The `declare options "[midi:on][nvoices:n]";` [coding convention](https://faustd
 
 ```html
 <faust-widget>
-<!--
+  <!--
 import("stdfaust.lib");
 declare options "[midi:on][nvoices:16]";
 
@@ -80,17 +80,17 @@ to get a polyphonic clarinet instrument with 16 voices and a global reverb effec
 
 The HTML [index.html](./index.html) example page can be copied and tested in `dist` folder.
 
-## NPM package 
+## NPM package
 
- A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.8.0/dist/faust-web-component.js (possibly update the version number).
- 
- Here is an HTML example using this model:
- 
+A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.8.1/dist/faust-web-component.js (possibly update the version number).
+
+Here is an HTML example using this model:
+
 ```html
 <p><em>Here's an embedded editor!</em></p>
 
 <faust-editor>
-<!--
+  <!--
 import("stdfaust.lib");
 
 vol = hslider("volume [unit:dB]", -10, -96, 0, 0.1) : ba.db2linear : si.smoo;
@@ -101,12 +101,12 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 -->
 </faust-editor>
 
-<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.8.0/dist/faust-web-component.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.8.1/dist/faust-web-component.js"></script>
 ```
 
 ## Demo
 
-Concrete use-cases can be seen: 
+Concrete use-cases can be seen:
 
 - in the [Faust documentation site](https://faustdoc.grame.fr).
 - in this [faust-web-widget](https://codepen.io/St-phane-Letz/pen/LYMWybP) and [faust-web-editor](https://codepen.io/St-phane-Letz/pen/YzdZZoK) editable pages.
