@@ -14,13 +14,12 @@ import {
     audioCtx,
     get_poly_generator,
     compiler,
-    getInputDevices,
-    deviceUpdateCallbacks,
     accessMIDIDevice,
     midiInputCallback,
     extractMidiAndNvoices,
     get_mono_generator,
 } from "./common";
+import { InputSource } from "./input";
 
 // Create a template for the FaustWidget component
 const template = document.createElement("template")
@@ -40,6 +39,7 @@ template.innerHTML = `
         <a title="Faust website" id="faust" href="https://faust.grame.fr/" target="_blank"><img src="${faustSvg}" height="15px" /></a>
     </div>
     <div id="faust-ui"></div>
+    <div id="faust-input" hidden></div>
 </div>
 <style>
     #root {
@@ -102,6 +102,14 @@ template.innerHTML = `
         vertical-align: top;
     }
 
+    #faust-input {
+        border-top: 1px solid black;
+    }
+
+    #faust-input[hidden] {
+        display: none;
+    }
+
     .dropdown {
         height: 19px;
         margin: 3px 0 3px 10px;
@@ -129,6 +137,15 @@ export default class FaustWidget extends HTMLElement {
         const powerButton = this.shadowRoot!.querySelector("#power") as HTMLButtonElement;
         const faustUIRoot = this.shadowRoot!.querySelector("#faust-ui") as HTMLDivElement;
         const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement;
+        const faustInput = this.shadowRoot!.querySelector("#faust-input") as HTMLDivElement;
+
+        // Audio input: test signals, devices, audio file; the controls of the
+        // test signals are shown under the DSP's own controls
+        const inputSource = new InputSource(audioInputSelector, faustInput, this.getAttribute("input"));
+        inputSource.onTestSignal = (active) => {
+            faustInput.hidden = !active;
+            if (active) inputSource.resizePanel();
+        };
 
         // Enable the power button once Faust is ready
         faustPromise.then(() => powerButton.disabled = false);
@@ -138,10 +155,8 @@ export default class FaustWidget extends HTMLElement {
         let gmidi = false;
         let gnvoices = -1;
         let node: IFaustMonoWebAudioNode | IFaustPolyWebAudioNode;
-        let input: MediaStreamAudioSourceNode | undefined;
         let faustUI: FaustUI;
         let generator: FaustMonoDspGenerator | FaustPolyDspGenerator;
-        let sourceNode: AudioBufferSourceNode | undefined;
 
         // Function to setup the Faust environment
         const setup = async () => {
@@ -208,14 +223,7 @@ export default class FaustWidget extends HTMLElement {
             node.setOutputParamHandler((path, value) => faustUI.paramChangeByDSP(path, value));
 
             // Enable audio input if necessary
-            if (node.numberOfInputs > 0) {
-                audioInputSelector.disabled = false;
-                updateInputDevices(await getInputDevices());
-                await connectInput();
-            } else {
-                audioInputSelector.disabled = true;
-                audioInputSelector.innerHTML = "<option>Audio input</option>";
-            }
+            await inputSource.attach(node);
 
             // Connect Faust node to the audio context destination
             node.connect(audioCtx.destination);
@@ -224,6 +232,7 @@ export default class FaustWidget extends HTMLElement {
 
         // Function to stop the Faust node
         const stop = () => {
+            inputSource.detach();
             node?.disconnect();
             node?.stopSensors();
             powerButton.style.color = "#fff";
@@ -238,62 +247,6 @@ export default class FaustWidget extends HTMLElement {
             }
             on = !on;
         }
-
-        // Function to update available audio input devices
-        const updateInputDevices = (devices: MediaDeviceInfo[]) => {
-            if (audioInputSelector.disabled) return;
-            while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove();
-            for (const device of devices) {
-                if (device.kind === "audioinput") {
-                    audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId));
-                }
-            }
-            audioInputSelector.appendChild(new Option("Audio File", "Audio File"));
-        }
-        deviceUpdateCallbacks.push(updateInputDevices);
-
-        // Function to connect selected audio input device
-        const connectInput = async () => {
-            const deviceId = audioInputSelector.value;
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-            if (input) {
-                input.disconnect();
-                input = undefined;
-            }
-            if (node && node.numberOfInputs > 0) {
-                if (deviceId == "Audio File") {
-                    try {
-                        // Extract the base URL (excluding the script filename)
-                        const scriptTag = document.querySelector('script[src$="faust-web-component.js"]');
-                        const scriptSrc = scriptTag.src;
-                        const baseUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/') + 1);
-                        // Load the file
-                        let file = await fetch(baseUrl + '02-XYLO1.mp3');
-                        const arrayBuffer = await file.arrayBuffer();
-                        let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                        // Create a source node from the buffer
-                        sourceNode = audioCtx.createBufferSource();
-                        sourceNode.buffer = audioBuffer;
-                        sourceNode.connect(node!);
-                        // Start playing the file
-                        sourceNode.start();
-                    } catch (error) {
-                        console.error("Error loading file: ", error);
-                    }
-                } else {
-                    if (sourceNode !== undefined) {
-                        sourceNode.stop();
-                        sourceNode.disconnect();
-                        sourceNode = undefined;
-                    }
-                    input = audioCtx.createMediaStreamSource(stream);
-                    input.connect(node!);
-                }
-            }
-        }
-
-        // Set input change handler
-        audioInputSelector.onchange = connectInput;
 
         // Initial setup
         setTimeout(() => {

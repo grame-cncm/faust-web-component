@@ -28,7 +28,8 @@ import {
     faDiagramProject,
     faWaveSquare,
     faChartLine,
-    faPowerOff
+    faPowerOff,
+    faRightToBracket
 } from "@fortawesome/free-solid-svg-icons";
 
 // Add icons to FontAwesome library
@@ -43,7 +44,8 @@ for (const icon of [
     faDiagramProject,
     faWaveSquare,
     faChartLine,
-    faPowerOff
+    faPowerOff,
+    faRightToBracket
 ]) {
     library.add(icon);
 }
@@ -73,26 +75,24 @@ audioCtx.destination.channelInterpretation = "discrete";
 export const deviceUpdateCallbacks: Array<(devices: MediaDeviceInfo[]) => void> = [];
 let devices: MediaDeviceInfo[] = [];
 
-// Get input devices
-async function _getInputDevices(): Promise<void> {
+// Enumerate the devices and pass them to the components. This does not ask for
+// the microphone: until the page is allowed to use it, the browser gives the
+// inputs without labels, so the list is enumerated again after each getUserMedia.
+export async function refreshInputDevices(): Promise<MediaDeviceInfo[]> {
     if (navigator.mediaDevices) {
-        navigator.mediaDevices.ondevicechange = _getInputDevices;
-        try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (e) {
-            // Ignore permission errors
-        }
+        navigator.mediaDevices.ondevicechange = () => { refreshInputDevices(); };
         devices = await navigator.mediaDevices.enumerateDevices();
         for (const callback of deviceUpdateCallbacks) {
             callback(devices);
         }
     }
+    return devices;
 }
 
-let getInputDevicesPromise: Promise<void> | undefined;
+let getInputDevicesPromise: Promise<MediaDeviceInfo[]> | undefined;
 export async function getInputDevices(): Promise<MediaDeviceInfo[]> {
     if (!getInputDevicesPromise) {
-        getInputDevicesPromise = _getInputDevices();
+        getInputDevicesPromise = refreshInputDevices();
     }
     await getInputDevicesPromise;
     return devices;

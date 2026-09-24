@@ -20,6 +20,16 @@ process = pm.SFFormantModelFofSmooth_ui_MIDI <: _,_;
 -->
     </faust-editor>
     <center>
+        <H1>Here's an effect, fed by a test signal!</H1>
+    </center>
+
+    <faust-editor input="impulse">
+        <!--
+import("stdfaust.lib");
+process = fi.resonlp(hslider("freq",1000,100,5000,1), 10, 1) <: _,_;
+-->
+    </faust-editor>
+    <center>
         <H1>Here's a simple DSP widget!</H1>
 
         <faust-widget>

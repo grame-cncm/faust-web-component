@@ -11,14 +11,13 @@ import {
     svgDiagrams,
     get_mono_generator,
     get_poly_generator,
-    getInputDevices,
-    deviceUpdateCallbacks,
     accessMIDIDevice,
     midiInputCallback,
     extractMidiAndNvoices
 } from "./common";
 import { createEditor, setError, clearError } from "./editor";
 import { Scope } from "./scope";
+import { InputSource } from "./input";
 import faustSvg from "./faustText.svg";
 
 // Create a template for the component
@@ -48,12 +47,14 @@ template.innerHTML = `
                 <button title="Block Diagram" id="tab-diagram" class="button tab" disabled>${icon({ prefix: "fas", iconName: "diagram-project" }).html[0]}</button>
                 <button title="Scope" id="tab-scope" class="button tab" disabled>${icon({ prefix: "fas", iconName: "wave-square" }).html[0]}</button>
                 <button title="Spectrum" id="tab-spectrum" class="button tab" disabled>${icon({ prefix: "fas", iconName: "chart-line" }).html[0]}</button>
+                <button title="Test signal" id="tab-input" class="button tab" disabled>${icon({ prefix: "fas", iconName: "right-to-bracket" }).html[0]}</button>
             </div>
             <div id="sidebar-content">
                 <div id="faust-ui"></div>
                 <div id="faust-diagram"></div>
                 <div id="faust-scope"></div>
                 <div id="faust-spectrum"></div>
+                <div id="faust-input"></div>
             </div>
         </div>
     </div>
@@ -82,7 +83,7 @@ template.innerHTML = `
         align-items: center;
     }
 
-    #faust-ui {
+    #faust-ui, #faust-input {
         width: 232px;
         max-height: 150px;
     }
@@ -257,6 +258,17 @@ export default class FaustEditor extends HTMLElement {
         const sidebarContent = this.shadowRoot!.querySelector("#sidebar-content") as HTMLDivElement;
         const tabButtons = [...this.shadowRoot!.querySelectorAll(".tab")] as HTMLButtonElement[];
         const tabContents = [...sidebarContent.querySelectorAll("div")] as HTMLDivElement[];
+        const inputTab = this.shadowRoot!.querySelector("#tab-input") as HTMLButtonElement;
+        const faustInput = this.shadowRoot!.querySelector("#faust-input") as HTMLDivElement;
+
+        // Audio input: test signals, devices, audio file
+        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement;
+        const inputSource = new InputSource(audioInputSelector, faustInput, this.getAttribute("input"));
+        // The Input tab holds the controls of the test signals
+        inputSource.onTestSignal = (active) => {
+            inputTab.disabled = !active;
+            if (!active && inputTab.classList.contains("active")) openTab(0);
+        };
 
         // Initialize split.js for resizable editor and sidebar
         const split = Split([editorEl, sidebar], {
@@ -283,13 +295,11 @@ export default class FaustEditor extends HTMLElement {
 
         // Variables for audio and visualization nodes
         let node: IFaustMonoWebAudioNode | undefined;
-        let input: MediaStreamAudioSourceNode | undefined;
         let analyser: AnalyserNode | undefined;
         let scope: Scope | undefined;
         let spectrum: Scope | undefined;
         let gmidi = false;
         let gnvoices = -1;
-        let sourceNode: AudioBufferSourceNode | undefined;
 
         // Counter for compiled DSP 
         let compiledDSPCounter = 0;
@@ -343,17 +353,11 @@ export default class FaustEditor extends HTMLElement {
             }
 
             // Set up audio input if necessary
-            if (node.numberOfInputs > 0) {
-                audioInputSelector.disabled = false;
-                updateInputDevices(await getInputDevices());
-                await connectInput();
-            } else {
-                audioInputSelector.disabled = true;
-                audioInputSelector.innerHTML = "<option>Audio input</option>";
-            }
+            await inputSource.attach(node);
             node.connect(audioCtx.destination);
             stopButton.disabled = false;
-            for (const tabButton of tabButtons) {
+            // The Input tab is enabled by the input source
+            for (const tabButton of tabButtons.slice(0, 4)) {
                 tabButton.disabled = false;
             }
 
@@ -373,8 +377,8 @@ export default class FaustEditor extends HTMLElement {
 
             openSidebar();
 
-            // Clear old tab contents
-            for (const tab of tabContents) {
+            // Clear old tab contents (the Input tab keeps its controls)
+            for (const tab of tabContents.slice(0, 4)) {
                 while (tab.lastChild) tab.lastChild.remove();
             }
             // Create scope & spectrum plots
@@ -468,6 +472,9 @@ export default class FaustEditor extends HTMLElement {
                 cancelAnimationFrame(animPlot);
                 animPlot = undefined;
             }
+            if (i === 4) {
+                inputSource.resizePanel();
+            }
         }
 
         // Attach event listeners to tab buttons
@@ -478,6 +485,7 @@ export default class FaustEditor extends HTMLElement {
         // Event handler for the stop button
         stopButton.onclick = () => {
             if (node !== undefined) {
+                inputSource.detach();
                 node.disconnect();
                 node.stopSensors();
                 node.destroy();
@@ -486,63 +494,5 @@ export default class FaustEditor extends HTMLElement {
                 // TODO: Maybe disable controls in faust-ui tab.
             }
         }
-
-        // Audio input selector element
-        const audioInputSelector = this.shadowRoot!.querySelector("#audio-input") as HTMLSelectElement;
-
-        // Update the audio input device list
-        const updateInputDevices = (devices: MediaDeviceInfo[]) => {
-            if (audioInputSelector.disabled) return;
-            while (audioInputSelector.lastChild) audioInputSelector.lastChild.remove();
-            for (const device of devices) {
-                if (device.kind === "audioinput") {
-                    audioInputSelector.appendChild(new Option(device.label || device.deviceId, device.deviceId));
-                }
-            }
-            audioInputSelector.appendChild(new Option("Audio File", "Audio File"));
-        }
-        deviceUpdateCallbacks.push(updateInputDevices);
-
-        // Connect the selected audio input device
-        const connectInput = async () => {
-            const deviceId = audioInputSelector.value;
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-            if (input) {
-                input.disconnect();
-                input = undefined;
-            }
-            if (node && node.numberOfInputs > 0) {
-                if (deviceId == "Audio File") {
-                    try {
-                        // Extract the base URL (excluding the script filename)
-                        const scriptTag = document.querySelector('script[src$="faust-web-component.js"]');
-                        const scriptSrc = scriptTag.src;
-                        const baseUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/') + 1);
-                        // Load the file
-                        let file = await fetch(baseUrl + '02-XYLO1.mp3');
-                        const arrayBuffer = await file.arrayBuffer();
-                        let audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                        // Create a source node from the buffer
-                        sourceNode = audioCtx.createBufferSource();
-                        sourceNode.buffer = audioBuffer;
-                        sourceNode.connect(node!);
-                        // Start playing the file
-                        sourceNode.start();
-                    } catch (error) {
-                        console.error("Error loading file: ", error);
-                    }
-                } else {
-                    if (sourceNode !== undefined) {
-                        sourceNode.stop();
-                        sourceNode.disconnect();
-                        sourceNode = undefined;
-                    }
-                    input = audioCtx.createMediaStreamSource(stream);
-                    input.connect(node!);
-                }
-            }
-        }
-
-        audioInputSelector.onchange = connectInput;
     }
 }
