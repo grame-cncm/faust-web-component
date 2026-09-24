@@ -55,7 +55,7 @@ process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 
 When the audio DSP code has inputs, the input selector offers:
 
-- **test signals**: impulse, white noise, pink noise, sine, sweep, square, sawtooth, pulse train, step and tone burst. The selected signal goes to every input of the DSP. Its level (−12 dB by default), frequency, period (of the impulses, of the sweep...) and a restart button are shown in the *Test signal* tab of `<faust-editor>`, under the controls of `<faust-widget>`;
+- **test signals**: impulse, white noise, pink noise, sine, sweep, square, sawtooth, pulse train, step and tone burst. The selected signal goes to every input of the DSP. Its level (−12 dB by default), frequency, period (of the impulses, of the sweep...) and a restart button are shown in the _Test signal_ tab of `<faust-editor>`, under the controls of `<faust-widget>`;
 - the audio **devices**: the microphone is only requested when a device is selected;
 - **Audio File**, a default audio file played into the DSP inputs.
 
@@ -99,7 +99,7 @@ The HTML [index.html](./index.html) example page can be copied and tested in `di
 
 ## NPM package
 
-A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.8.1/dist/faust-web-component.js (possibly update the version number).
+A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.9.0/dist/faust-web-component.js (possibly update the version number).
 
 Here is an HTML example using this model:
 
@@ -118,7 +118,7 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 -->
 </faust-editor>
 
-<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.8.1/dist/faust-web-component.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.9.0/dist/faust-web-component.js"></script>
 ```
 
 ## Demo
