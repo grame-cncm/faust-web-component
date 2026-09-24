@@ -51,7 +51,6 @@ for (const icon of [
 // Global variables for Faust
 export let compiler: FaustCompiler;
 export let svgDiagrams: FaustSvgDiagrams;
-export const default_generator = new FaustMonoDspGenerator();
 export const get_mono_generator = (): FaustMonoDspGenerator => new FaustMonoDspGenerator();
 export const get_poly_generator = (): FaustPolyDspGenerator => new FaustPolyDspGenerator();
 

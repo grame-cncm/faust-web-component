@@ -9,7 +9,7 @@ import {
     audioCtx,
     compiler,
     svgDiagrams,
-    default_generator,
+    get_mono_generator,
     get_poly_generator,
     getInputDevices,
     deviceUpdateCallbacks,
@@ -308,15 +308,22 @@ export default class FaustEditor extends HTMLElement {
             let generator = null;
             try {
                 // Compile Faust code to access JSON metadata
-                await default_generator.compile(compiler, "main", code, "-ftz 2");
-                const json = default_generator.getMeta();
+                // (each component has its own generator: a shared one would give every
+                // component the code compiled last)
+                const mono_generator = get_mono_generator();
+                await mono_generator.compile(compiler, "main", code, "-ftz 2");
+                const json = mono_generator.getMeta();
                 let { midi, nvoices } = extractMidiAndNvoices(json);
                 gmidi = midi;
                 gnvoices = nvoices;
 
-                // Build the generator (possibly reusing default_generator which is a FaustMonoDspGenerator) 
-                generator = nvoices > 0 ? get_poly_generator() : default_generator;
-                await generator.compile(compiler, "main", code, "-ftz 2");
+                // Build the generator (reusing mono_generator when not polyphonic)
+                if (nvoices > 0) {
+                    generator = get_poly_generator();
+                    await generator.compile(compiler, "main", code, "-ftz 2");
+                } else {
+                    generator = mono_generator;
+                }
                 compiledDSPCounter++;
 
             } catch (e: any) {
