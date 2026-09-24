@@ -20,6 +20,12 @@ npm run build
 
 This will generate `dist/faust-web-component.js`, which you can use with a `<script>` tag.
 
+To try it, `make test` builds it, copies `index.html` next to it in `dist/` and serves the page on http://localhost:8000 (`make` lists the other targets):
+
+```shell
+make test
+```
+
 ## Example Usage
 
 The editor and widget components can be used with the following HTML syntax:

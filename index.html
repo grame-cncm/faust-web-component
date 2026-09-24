@@ -42,6 +42,16 @@ t = button("[3]gate") : si.smoo;
 process = no.noise : fi.resonlp(ctFreq,q,gain)*t <: dm.zita_light;
 -->
         </faust-widget>
+
+        <H1>Here's a stereo effect widget, fed by a test signal!</H1>
+
+        <faust-widget input="white noise">
+            <!--
+import("stdfaust.lib");
+cutoff = hslider("cutoff",1000,50,10000,1) : si.smoo;
+process = fi.lowpass(2, cutoff), fi.highpass(2, cutoff);
+-->
+        </faust-widget>
     </center>
     <script src="faust-web-component.js"></script>
 
