@@ -110,7 +110,8 @@ export async function accessMIDIDevice(
                     const inputDevices = midiAccess.inputs.values();
                     for (const midiInput of inputDevices) {
                         midiInput.onmidimessage = (event) => {
-                            onMIDIMessage(event.data);
+                            // MIDIMessageEvent.data is null for an event without a message
+                            if (event.data) onMIDIMessage(event.data);
                         };
                         resolve();
                     }
