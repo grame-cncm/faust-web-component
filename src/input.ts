@@ -1,6 +1,6 @@
 // Audio input of a component: a test signal, a device or the audio file
 import { FaustMonoDspGenerator, IFaustMonoWebAudioNode, IFaustPolyWebAudioNode } from "@grame/faustwasm";
-import { FaustUI } from "@shren/faust-ui";
+import { FaustUI } from "@grame/faust-ui";
 import testSignalsCode from "./testsignals.dsp?raw";
 import {
     faustPromise,

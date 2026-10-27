@@ -1,8 +1,8 @@
 // Import necessary libraries and modules
 import { icon } from "@fortawesome/fontawesome-svg-core";
 import { FaustMonoDspGenerator, FaustPolyDspGenerator, IFaustMonoWebAudioNode } from "@grame/faustwasm";
-import { FaustUI } from "@shren/faust-ui";
-import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline";
+import { FaustUI } from "@grame/faust-ui";
+import faustCSS from "@grame/faust-ui/dist/esm/index.css?inline";
 import Split from "split.js";
 import {
     faustPromise,

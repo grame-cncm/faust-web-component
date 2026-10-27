@@ -1,6 +1,6 @@
 // Import necessary libraries and modules
 import { icon } from "@fortawesome/fontawesome-svg-core";
-import faustCSS from "@shren/faust-ui/dist/esm/index.css?inline";
+import faustCSS from "@grame/faust-ui/dist/esm/index.css?inline";
 import faustSvg from "./faustText.svg";
 import {
     FaustMonoDspGenerator,
@@ -8,7 +8,7 @@ import {
     IFaustMonoWebAudioNode,
     IFaustPolyWebAudioNode,
 } from "@grame/faustwasm";
-import { FaustUI } from "@shren/faust-ui";
+import { FaustUI } from "@grame/faust-ui";
 import {
     faustPromise,
     audioCtx,

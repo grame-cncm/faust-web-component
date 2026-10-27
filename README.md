@@ -7,7 +7,7 @@ This package provides two [web components](https://developer.mozilla.org/en-US/d
 
 - `<faust-widget>` just shows the controls and does not allow editing, so it serves simply as a way to embed interactive DSP.
 
-These components are built on top of [faustwasm](https://github.com/grame-cncm/faustwasm) and [faust-ui](https://github.com/Fr0stbyteR/faust-ui) packages.
+These components are built on top of [faustwasm](https://github.com/grame-cncm/faustwasm) and [faust-ui](https://github.com/grame-cncm/faust-ui) packages.
 
 ## Build Instructions
 
@@ -105,7 +105,7 @@ The HTML [index.html](./index.html) example page can be copied and tested in `di
 
 ## NPM package
 
-A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.10.0/dist/faust-web-component.js (possibly update the version number).
+A [npm package](https://www.npmjs.com/package/@grame/faust-web-component) can be used with the CDN link: https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.10.1/dist/faust-web-component.js (possibly update the version number).
 
 Here is an HTML example using this model:
 
@@ -124,7 +124,7 @@ process = vgroup("Oscillator", os.osc(freq1) * vol, os.osc(freq2) * vol);
 -->
 </faust-editor>
 
-<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.10.0/dist/faust-web-component.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@grame/faust-web-component@0.10.1/dist/faust-web-component.js"></script>
 ```
 
 ## Demo
