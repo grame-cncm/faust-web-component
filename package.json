@@ -43,7 +43,7 @@
         "@fortawesome/fontawesome-svg-core": "^6.4.2",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "@grame/faust-ui": "^1.2.0",
-        "@grame/faustwasm": "^0.19.2",
+        "@grame/faustwasm": "^0.22.0",
         "codemirror": "^6.0.1",
         "split.js": "^1.6.5"
     }
