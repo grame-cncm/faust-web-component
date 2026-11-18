@@ -26,7 +26,19 @@ To try it, `make test` builds it, copies `index.html` next to it in `dist/` and 
 make test
 ```
 
-## Example Usage
+### Automated tests
+
+```shell
+npx playwright install chromium   # once: the browser of the browser tests
+npm test                          # or: make check
+```
+
+runs, in order:
+
+- `npm run typecheck`: `tsc --noEmit` on `src/` (`vite build` does not check types);
+- `npm run test:unit`: [Vitest](https://vitest.dev) unit tests in `test/unit/`, in Node: how the `svg-*` attributes become compiler options;
+- `npm run test:e2e`: builds `dist/`, then [Playwright](https://playwright.dev) tests in `test/e2e/` load the components from the built script in Chromium (headless), on the page `test/e2e/pages/components.html`: the widget compiles and shows its controls, the editor shows plain and steppable diagrams, steps them, follows their links, and shows errors in the diagram tab. The tests keep every `AudioContext` suspended: nothing is heard, and each test checks it, along with the absence of errors in the console.
+
 
 The editor and widget components can be used with the following HTML syntax:
 

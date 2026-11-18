@@ -1,16 +1,18 @@
 # Build faust-web-component and try it in a browser.
 #   make          this help
 #   make test     build, then serve index.html with the built script on http://localhost:$(PORT)
+#   make check    the automated tests (npm test)
 
 PORT ?= 8000
 URL  := http://localhost:$(PORT)/
 
-.PHONY: help install build test clean
+.PHONY: help install build test check clean
 
 help:
 	@echo "make install   Install the npm dependencies (node_modules/)"
 	@echo "make build     Build dist/faust-web-component.js"
 	@echo "make test      Build, copy index.html to dist/ and serve it on $(URL) (Ctrl-C to stop)"
+	@echo "make check     Run the automated tests: type check, unit tests, browser tests (npm test)"
 	@echo "make clean     Remove dist/"
 	@echo "PORT=8001 make test  serves on another port"
 
@@ -30,6 +32,9 @@ test: build
 	@echo "Serving $(URL)"
 	@(sleep 1; open $(URL) 2>/dev/null || xdg-open $(URL) 2>/dev/null || true) &
 	python3 -m http.server $(PORT) --directory dist
+
+check: node_modules
+	npm test
 
 clean:
 	rm -rf dist

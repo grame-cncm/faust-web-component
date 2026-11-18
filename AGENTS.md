@@ -21,21 +21,31 @@ The Faust compiler is [faustwasm](https://github.com/grame-cncm/faustwasm) (`@gr
 - `src/scope.ts`: scope and spectrum plots. `src/editor.ts`: the CodeMirror setup and the error display.
 - `public/02-XYLO1.mp3`: the audio file, which the page loads from next to the script.
 - `index.html`: the example page, served by `make test`.
+- `test/unit/`: Vitest unit tests; `test/e2e/`: Playwright browser tests, their page (`pages/components.html`), helpers and static server; `vitest.config.ts`, `playwright.config.ts`.
 
 ## Build and check
 
 ```sh
 npm install            # or: make install
 npm run build          # dist/faust-web-component.js (vite, not minified, with a source map)
-npx tsc --noEmit -p .  # type-check: vite build does not check types
-make test              # build, copy index.html to dist/, serve http://localhost:8000
+npm test               # or: make check; the automated tests, below
+make test              # build, copy index.html to dist/, serve http://localhost:8000 (by hand)
 ```
 
-There is no automated test suite. A change is checked by `tsc --noEmit`, `npm run build`, and by loading a page in a browser: open the console and look for errors, check what the change shows. The page must be served over http (`make test`, or `python3 -m http.server` in `dist/`): from `file://` the AudioWorklet and the audio file do not load.
+`npm test` must pass before every commit. It runs:
 
-- Running a DSP plays sound through the speakers of the machine. To check a component without being heard, use a page of your own (not committed) that keeps every `AudioContext` suspended before the script loads: replace `window.AudioContext` with a subclass whose constructor calls `AudioContext.prototype.suspend` on the new context, and make `AudioContext.prototype.resume` do nothing. Run, the tabs and the diagrams still work; check `state === "suspended"` on each context.
-- An editor without an `input` attribute selects the first audio device, which asks for the microphone: give `input="impulse"` (or another test signal) in a test page.
-- Report what was checked and how: the commands, the page, the values read. Never claim a check that was not run.
+- `npm run typecheck`: `tsc --noEmit` on `src/`; `vite build` does not check types.
+- `npm run test:unit`: Vitest, `test/unit/*.test.ts`, in plain Node. For logic that needs no browser, such as `diagramArgs`. A module that imports `@grame/faustwasm` or `src/common.ts` is tested with both mocked (`vi.mock`): they load libfaust and create an `AudioContext` when imported.
+- `npm run test:e2e`: builds `dist/`, then Playwright, `test/e2e/*.spec.ts`, in Chromium. `test/e2e/serve.mjs` serves `test/e2e/pages/` and `dist/`, so the tests load the script that pages load. The `test` of `test/e2e/helpers.ts` opens `components.html` and, after each test, fails on a page error or a console error, and on an `AudioContext` that is not suspended. A test that expects a compilation error calls `log.allowCompilationErrors()`: libfaust-wasm is built without exception catching, so each Faust error logs `Aborted(...)` in the console before faustwasm reads its message; the module keeps working.
+- The browser of Playwright is installed once with `npx playwright install chromium`.
+
+Keeping the tests honest:
+
+- Behavior that a test page can show gets a browser test; a component or attribute is added to `test/e2e/pages/components.html`, with an id the specs use. Every component of that page has an `input` attribute: without it, the first audio device is selected, which asks for the microphone.
+- The tests never make sound: `helpers.ts` keeps every `AudioContext` suspended (a subclass whose constructor suspends the new context, and a `resume` that does nothing), and Chromium is launched with autoplay allowed so that this check means something. Compilation, nodes, controls and diagrams work with a suspended context; what needs audio to run (a rendered signal, the scope) is not tested here.
+- Read values from what the page shows (the texts of a diagram, the selected option), and wait for them with `expect.poll` or a web-first assertion, never with a fixed delay.
+- When a test is written for a bug or a feature, break the code on purpose once and check that the test goes red; a test that passes either way proves nothing.
+- Report what was checked and how: the commands, the number of tests, which failed. Never claim a check that was not run. Checking by hand in a browser (`make test`) runs a DSP through the speakers: in a page of your own, keep the `AudioContext` suspended the same way.
 
 ## Conventions
 
@@ -55,4 +65,4 @@ There is no automated test suite. A change is checked by `tsc --noEmit`, `npm ru
 
 - Work on a branch; integrate into `main` by rebase then fast-forward (`git merge --ff-only`), keeping the history linear.
 - Commit messages: a summary line, then a body explaining why, and how the change was checked. Credit an AI agent that co-authored the change with a `Co-Authored-By:` trailer.
-- Do not commit `dist/`, test pages or other scratch files. Do not push, tag, publish to npm or open pull requests unless asked to.
+- Do not commit `dist/`, `test-results/`, scratch pages or other scratch files. Do not push, tag, publish to npm or open pull requests unless asked to.

@@ -16,7 +16,11 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "typecheck": "tsc --noEmit -p .",
+        "test": "npm run typecheck && npm run test:unit && npm run test:e2e",
+        "test:unit": "vitest run",
+        "test:e2e": "vite build && playwright test"
     },
     "repository": {
         "type": "git",
@@ -35,8 +39,10 @@
     },
     "homepage": "https://github.com/grame-cncm/faust-web-component#readme",
     "devDependencies": {
+        "@playwright/test": "^1.64.1",
         "typescript": "^5.0.2",
-        "vite": ">=4.5.2"
+        "vite": ">=4.5.2",
+        "vitest": "^4.1.12"
     },
     "dependencies": {
         "@codemirror/legacy-modes": "^6.3.3",
