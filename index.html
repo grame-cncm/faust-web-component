@@ -30,6 +30,17 @@ process = fi.resonlp(hslider("freq",1000,100,5000,1), 10, 1) <: _,_;
 -->
     </faust-editor>
     <center>
+        <H1>Here's a steppable block diagram: Run, then open the Block Diagram tab!</H1>
+    </center>
+
+    <faust-editor input="impulse" svg-step="16" svg-step-input="1" svg-step-controls="gate=1@3 gate=0@8" svg-fold="0">
+        <!--
+smooth = *(0.5) : + ~ *(0.5);
+gate   = button("gate");
+process = _ <: smooth, (*(gate) : smooth);
+-->
+    </faust-editor>
+    <center>
         <H1>Here's a simple DSP widget!</H1>
 
         <faust-widget>

@@ -8,7 +8,6 @@ import {
     faustPromise,
     audioCtx,
     compiler,
-    svgDiagrams,
     get_mono_generator,
     get_poly_generator,
     accessMIDIDevice,
@@ -18,6 +17,7 @@ import {
 import { createEditor, setError, clearError } from "./editor";
 import { Scope } from "./scope";
 import { InputSource } from "./input";
+import { showDiagrams } from "./diagram";
 import faustSvg from "./faustText.svg";
 
 // Create a template for the component
@@ -96,6 +96,13 @@ template.innerHTML = `
     #faust-diagram {
         max-width: 232px;
         height: 150px;
+    }
+
+    #faust-diagram .diagram-error {
+        margin: 5px;
+        white-space: pre-wrap;
+        font-size: 11px;
+        color: #a4000f;
     }
 
     #content {
@@ -404,20 +411,6 @@ export default class FaustEditor extends HTMLElement {
             faustUIRoot.style.height = faustUI.minHeight * 1.25 + "px";
         }
 
-        // Function to set SVG in the block diagram tab
-        const setSVG = (svgString: string) => {
-            faustDiagram.innerHTML = svgString;
-
-            for (const a of faustDiagram.querySelectorAll("a")) {
-                a.onclick = e => {
-                    e.preventDefault();
-                    const filename = (a.href as any as SVGAnimatedString).baseVal;
-                    const svgString = compiler.fs().readFile("main-svg/" + filename, { encoding: "utf8" }) as string;
-                    setSVG(svgString);
-                }
-            }
-        }
-
         let animPlot: number | undefined;
 
         // Function to render the scope
@@ -454,9 +447,10 @@ export default class FaustEditor extends HTMLElement {
                     // Display a "Computing SVG..." message while the SVG is being generated
                     faustDiagram.innerHTML = "<p><center>Computing SVG...</center></p>";
 
-                    // Use setTimeout to defer the SVG rendering to a separate task
+                    // Use setTimeout to defer the SVG rendering to a separate task;
+                    // the svg-* attributes give the diagram options (src/diagram.ts)
                     setTimeout(() => {
-                        setSVG(svgDiagrams.from("main", code, "")["process.svg"]);
+                        showDiagrams(faustDiagram, code, this);
                         compiledSVGCounter = compiledDSPCounter;
                     }, 0);
                 }
